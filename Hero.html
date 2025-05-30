@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LIMINA: Set your desired price for products and let us handle the purchase. Only pay if your price is met. Guaranteed."> <title>LIMINA | Your Price. Guaranteed.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <style>
+        :root {
+            --primary-dark: #10344C;
+            --primary-medium: #1e5b8a;
+            --primary-light: #2d81c4;
+            --accent: #FACC15;
+            --accent-light: #FDE68A;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            color: var(--primary-dark);
+            overflow-x: hidden; /* Ideally, find the cause of overflow rather than hiding */
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .limina-logo {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .limina-logo svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: visible;
+        }
+        
+        /* Header logo animations */
+        #header-check {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: draw-check 0.8s ease-out forwards;
+        }
+        
+        @keyframes draw-check {
+            to { stroke-dashoffset: 0; }
+        }
+        
+        #header-coin {
+            transform-origin: 39px 50px;
+            opacity: 0;
+            animation: coin-pop-spin 0.6s ease-out 0.2s forwards;
+            filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4));
+        }
+        
+        @keyframes coin-pop-spin {
+            0%   { transform: translate(0px, 0px) rotateY(0deg) scale(1); opacity: 1; }
+            50%  { transform: translate(0px, -12px) rotateY(180deg) scale(1.1); opacity: 1; }
+            100% { transform: translate(0px, 0px) rotateY(360deg) scale(1); opacity: 1; }
+        }
+        
+        .text-gradient {
+            background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-link {
+            position: relative;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: var(--accent);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover:after, .nav-link.active:after { /* Added active state for underline */
+            width: 100%;
+        }
+        
+        .stats-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .screenshot {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .checkout-card {
+            border-radius: 12px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .pill-tabs .pill-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .pill-tabs .pill-tab.active {
+            background: var(--primary-dark);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent);
+            color: var(--primary-dark);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        /* Scroll Animations */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Animation delays */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        
+        .stagger-animation > * {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .stagger-animation.animate-in > * {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Removed CSS subtle-float as GSAP is handling .floating elements */
+        
+        .guarantee-badge {
+            display: inline-block;
+            background: linear-gradient(to right, var(--accent), var(--accent-light));
+            border-radius: 50px;
+            padding: 0.25rem 1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
+        }
+        
+        .merchant-paid-tag {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .merchant-pending-tag {
+            background-color: #fef3c7;
+            color: #854d0e;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Mobile menu icon transition */
+        .hamburger-icon .line {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .hamburger-icon.open .line1 {
+            transform: translateY(7px) rotate(45deg);
+        }
+        .hamburger-icon.open .line2 {
+            opacity: 0;
+        }
+        .hamburger-icon.open .line3 {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+    <nav class="fixed w-full bg-white/90 backdrop-blur-md z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center">
+                    <a href="#" aria-label="Limina Homepage" class="flex items-center"> <div class="limina-logo mr-3">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" rx="25" fill="#10344C"/>
+                                <path id="header-check" d="M15 55 L40 80 L85 22" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                <circle id="header-coin" cx="39" cy="50" r="9" fill="#FACC15" stroke="#F59E0B" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-gray-900">LIMINA</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="#how-it-works" class="nav-link text-gray-700 font-medium">How It Works</a>
+                    <a href="#shoppers" class="nav-link text-gray-700 font-medium">For Shoppers</a>
+                    <a href="#businesses" class="nav-link text-gray-700 font-medium">For Businesses</a>
+                    <a href="#benefits" class="nav-link text-gray-700 font-medium">Benefits</a>
+                </div>
+                <div class="flex items-center">
+                    <a href="#contact" class="hidden md:inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-gradient-to-r from-[#10344C] to-[#1e5b8a] hover:from-[#1e5b8a] hover:to-[#10344C] transition-all duration-300 shadow-lg">
+                        Get Started
+                    </a>
+                    <button id="mobile-menu-button" class="md:hidden ml-4 p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" aria-expanded="false" aria-controls="mobile-menu">
+                        <span class="sr-only">Open main menu</span>
+                        <div class="hamburger-icon space-y-1.5">
+                            <span class="line line1 block w-6 h-0.5 bg-gray-700"></span>
+                            <span class="line line2 block w-6 h-0.5 bg-gray-700"></span>
+                            <span class="line line3 block w-6 h-0.5 bg-gray-700"></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-white shadow-lg absolute w-full">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#how-it-works" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">How It Works</a>
+                <a href="#shoppers" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">For Shoppers</a>
+                <a href="#businesses" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">For Businesses</a>
+                <a href="#benefits" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Benefits</a>
+                <a href="#contact" class="block w-full text-left px-3 py-3 mt-2 border-t border-gray-200 text-base font-medium rounded-md text-white bg-gradient-to-r from-[#10344C] to-[#1e5b8a] hover:from-[#1e5b8a] hover:to-[#10344C] transition-all duration-300 shadow-md">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-gradient pt-32 pb-20 md:pt-40 md:pb-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+                <div class="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-7 lg:text-left lg:flex lg:items-center">
+                    <div class="scroll-animate">
+                        <h1 class="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
+                            <span class="block">Get What You Want</span>
+                            <span class="block text-yellow-300">At Your Perfect Price</span>
+                        </h1>
+                        <p class="mt-3 text-base text-gray-300 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                            Set your price and timeframe. Only pay if we get your price. We guarantee the purchase only if your price is met.
+                        </p>
+                        <div class="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 stagger-animation">
+                                <a href="#how-it-works" class="scroll-animate delay-1 inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-[#10344C] bg-yellow-300 hover:bg-yellow-400 md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg">
+                                    How It Works
+                                    <i class="fas fa-arrow-down ml-2 text-md"></i>
+                                </a>
+                                <a href="#contact" class="scroll-animate delay-2 inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-white bg-[#10344C]/70 hover:bg-[#10344C] md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg">
+                                    Join Waitlist
+                                    <i class="fas fa-arrow-right ml-2 text-md"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-5 lg:flex lg:items-center">
+                    <div class="relative mx-auto w-full rounded-lg shadow-lg floating bg-white p-6">
+                        <div class="flex items-center mb-5">
+                            <img class="h-16 w-16 rounded-lg object-cover" src="https://images.unsplash.com/photo-1605236453806-6ff36851218e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=764&q=80" alt="Mockup of Limina app showing iPhone 16 Pro price tracking" loading="lazy"> <div class="ml-4">
+                                <h3 class="font-medium text-gray-800 text-lg">iPhone 16 Pro</h3>
+                                <p class="text-sm text-gray-500">Current price: <span class="line-through">£799</span> <span class="font-bold text-green-600">£749</span></p>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="hero-set-price" class="block text-sm font-medium text-gray-700 mb-1">Set your price</label> <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">£</span>
+                                </div>
+                                <input type="number" id="hero-set-price" class="pl-8 w-full rounded-lg border border-gray-300 py-2 px-4 focus:ring-2 focus:ring-blue-300 focus:border-blue-500" value="699" min="0" step="10"> </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="hero-timeframe" class="block text-sm font-medium text-gray-700 mb-1">Timeframe</label> <select id="hero-timeframe" class="w-full rounded-lg border border-gray-300 py-2 px-4 focus:ring-2 focus:ring-blue-300 focus:border-blue-500"> <option>7 days</option>
+                                <option selected>14 days</option>
+                                <option>30 days</option>
+                                <option>60 days</option>
+                            </select>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-[#10344C] to-[#1e5b8a] hover:from-[#1e5b8a] hover:to-[#10344C] text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                            Set Buy Order
+                        </button>
+                        <p class="text-xs text-center text-gray-500 mt-3">No upfront payment. Only pay if your price is met.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="guarantee" class="py-16 bg-gradient-to-r from-[#FEF3C7] to-[#FDE68A]">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center scroll-animate">
+                <div class="inline-flex items-center justify-center px-6 py-2 bg-white rounded-full mb-6 shadow-sm">
+                    <span class="text-lg font-bold text-[#10344C]">Limina Promise</span>
+                    <i class="fas fa-shield-alt ml-2 text-yellow-500"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-[#10344C]">
+                    Shop With Confidence. Pay Only If The Price Is Right.
+                </h2>
+                <div class="mt-6 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 stagger-animation">
+                    <div class="scroll-animate">
+                        <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4 mx-auto shadow-md">
+                            <i class="fas fa-hand-holding-usd text-2xl text-yellow-500"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">No Deposits</h3>
+                        <p class="mt-2 text-gray-700">Pay nothing until your price is met. Zero upfront cost.</p>
+                    </div>
+                    <div class="scroll-animate">
+                        <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4 mx-auto shadow-md">
+                            <i class="fas fa-percentage text-2xl text-yellow-500"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">Price Precision</h3>
+                        <p class="mt-2 text-gray-700">Set exactly what you're willing to pay. No compromises.</p>
+                    </div>
+                    <div class="scroll-animate">
+                        <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4 mx-auto shadow-md">
+                            <i class="fas fa-bolt text-2xl text-yellow-500"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">Instant Purchase</h3>
+                        <p class="mt-2 text-gray-700">When your price hits, we buy immediately.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="py-16 bg-white">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-gray-900 mb-12 scroll-animate">Simple, Transparent Process</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300 scroll-animate">
+                        <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center text-blue-600 text-xl mb-4">
+                            1
+                        </div>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">Set Your Terms</h3>
+                        <p class="text-gray-600">Choose your ideal price and timeframe. We'll monitor the market.</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300 scroll-animate">
+                        <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center text-blue-600 text-xl mb-4">
+                            2
+                        </div>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">Automatic Purchase</h3>
+                        <p class="text-gray-600">If your price is met, we immediately purchase the item.</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300 scroll-animate">
+                        <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center text-blue-600 text-xl mb-4">
+                            3
+                        </div>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">Enjoy Your Purchase</h3>
+                        <p class="text-gray-600">We handle delivery and only charge you when we get your price.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="shoppers" class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 scroll-animate">Perfect for Value-Conscious Shoppers</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 scroll-animate">Get what you want without compromising on price.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm scroll-animate hover:shadow-md transition-all">
+                    <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 text-xl mb-4">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">No Financial Risk</h3>
+                    <p class="text-gray-600">Your funds are only committed if we purchase at your specified price.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm scroll-animate hover:shadow-md transition-all">
+                    <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 text-xl mb-4">
+                        <i class="fas fa-search-dollar"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Smart Tracking</h3>
+                    <p class="text-gray-600">We continuously monitor prices across retailers so you don't have to.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm scroll-animate hover:shadow-md transition-all">
+                    <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 text-xl mb-4">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Certainty</h3>
+                    <p class="text-gray-600">Know exactly what you'll pay if your price is met - no surprises.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="businesses" class="py-16 bg-gradient-to-br from-[#10344C]/5 to-[#1e5b8a]/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 scroll-animate">
+                <h2 class="text-3xl font-bold text-gray-900">Guaranteed Revenue When Prices Drop</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500">Convert price-sensitive customers into guaranteed sales.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="p-6 bg-white rounded-xl shadow-md floating scroll-animate">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-handshake mr-2 text-blue-500"></i>
+                            Merchant Assurance
+                        </h3>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <h4 class="font-semibold text-lg mb-1">Guaranteed Payment</h4>
+                                <p class="text-gray-600">When prices drop to match customer bids, we immediately purchase and pay you - regardless of whether we've collected from the customer yet.</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-lg mb-1">Demand Forecasting</h4>
+                                <p class="text-gray-600">See exactly what price points customers are willing to pay, helping you optimize pricing strategies.</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-lg mb-1">Inventory Management</h4>
+                                <p class="text-gray-600">Convert uncertain demand into guaranteed sales at price points that work for your business.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl overflow-hidden shadow-lg floating scroll-animate">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-bold flex items-center">
+                            <i class="fas fa-store mr-2"></i>
+                            Merchant Dashboard
+                        </h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h4 class="font-medium">Guaranteed Orders</h4>
+                            <div class="relative">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">8 pending</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between mb-2">
+                                    <h4 class="font-semibold">Smartphone Ultra Pro</h4>
+                                    <span class="merchant-pending-tag">Waiting on Price</span>
+                                </div>
+                                <div class="text-sm text-gray-600 flex justify-between">
+                                    <span>Target: £699 | Current: £749</span>
+                                    <span>Expires: Dec 31</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 bg-green-50">
+                                <div class="flex justify-between mb-2">
+                                    <h4 class="font-semibold">Premium Headphones</h4>
+                                    <span class="merchant-paid-tag">Paid by Limina</span>
+                                </div>
+                                <div class="text-sm text-gray-600 flex justify-between">
+                                    <span>Target: £199 | Met Price: £199</span>
+                                    <span>Purchased: Oct 12</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between mb-2">
+                                    <h4 class="font-semibold">Laptop Pro 16"</h4>
+                                    <span class="merchant-pending-tag">Waiting on Price</span>
+                                </div>
+                                <div class="text-sm text-gray-600 flex justify-between">
+                                    <span>Target: £1399 | Current: £1499</span>
+                                    <span>Expires: Nov 15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="benefits" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 scroll-animate">
+                <h2 class="text-3xl font-bold text-gray-900">Key Benefits of Using Limina</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500">Unlock smart shopping and guaranteed sales.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 stagger-animation">
+                <div class="scroll-animate bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center text-yellow-600 text-xl mb-4"><i class="fas fa-piggy-bank"></i></div>
+                    <h3 class="font-bold text-xl mb-3">Maximize Savings</h3>
+                    <p class="text-gray-600">Shoppers secure the best possible price without constant monitoring.</p>
+                </div>
+                <div class="scroll-animate bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 text-xl mb-4"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="font-bold text-xl mb-3">Increase Conversions</h3>
+                    <p class="text-gray-600">Businesses capture sales from price-sensitive customers who might otherwise not buy.</p>
+                </div>
+                <div class="scroll-animate bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl mb-4"><i class="fas fa-cogs"></i></div>
+                    <h3 class="font-bold text-xl mb-3">Effortless Process</h3>
+                    <p class="text-gray-600">Set it and forget it. Limina automates the price tracking and purchasing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 bg-gradient-to-r from-[#10344C] to-[#1e5b8a]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto text-center scroll-animate">
+                <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
+                    <span class="block">Real Results From Beta Users</span>
+                </h2>
+            </div>
+            <div class="mt-12 grid grid-cols-2 gap-8 sm:grid-cols-4 stagger-animation">
+                <div class="scroll-animate text-center">
+                    <p class="text-4xl font-bold text-yellow-300">37%</p>
+                    <p class="mt-1 text-sm font-medium text-white">Savings on tech products</p>
+                </div>
+                <div class="scroll-animate text-center">
+                    <p class="text-4xl font-bold text-yellow-300">100%</p>
+                    <p class="mt-1 text-sm font-medium text-white">Merchants paid immediately when price hits</p>
+                </div>
+                <div class="scroll-animate text-center">
+                    <p class="text-4xl font-bold text-yellow-300">89%</p>
+                    <p class="mt-1 text-sm font-medium text-white">Success rate for matching prices</p>
+                </div>
+                <div class="scroll-animate text-center">
+                    <p class="text-4xl font-bold text-yellow-300">4.8/5</p>
+                    <p class="mt-1 text-sm font-medium text-white">Customer satisfaction rating</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-16 bg-white">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 scroll-animate">Join the Limina Revolution</h2>
+                <p class="mt-3 text-xl text-gray-500 scroll-animate">Be among the first to experience worry-free purchasing</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 scroll-animate">
+                <div class="max-w-md mx-auto">
+                    <form>
+                        <div class="space-y-5">
+                            <div>
+                                <label for="contact-name" class="block text-sm font-medium text-gray-700 mb-1">Your Name</label> <input type="text" id="contact-name" class="w-full rounded-lg border border-gray-300 py-3 px-4 focus:ring-2 focus:ring-blue-300 focus:border-blue-500" required> </div>
+                            
+                            <div>
+                                <label for="contact-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label> <input type="email" id="contact-email" class="w-full rounded-lg border border-gray-300 py-3 px-4 focus:ring-2 focus:ring-blue-300 focus:border-blue-500" required> </div>
+                            
+                            <div>
+                                <label for="contact-interest" class="block text-sm font-medium text-gray-700 mb-1">You're primarily interested in:</label> <select id="contact-interest" class="w-full rounded-lg border border-gray-300 py-3 px-4 focus:ring-2 focus:ring-blue-300 focus:border-blue-500"> <option>Using Limina as a shopper</option>
+                                    <option>Partnering as a business</option>
+                                    <option>Learning about API integrations</option>
+                                    <option>Investment opportunities</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <button type="submit" class="w-full bg-gradient-to-r from-[#10344C] to-[#1e5b8a] text-white font-bold py-3 px-6 rounded-lg hover:from-[#1e5b8a] hover:to-[#10344C] transition-all duration-300">
+                                    Join Waitlist
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-[#10344C] text-white">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center">
+                        <div class="limina-logo mr-3">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" rx="25" fill="white"/>
+                                <path d="M15 55 L40 80 L85 22" stroke="#10344C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" class="footer-check"/>
+                                <circle cx="39" cy="50" r="9" fill="#FACC15" stroke="#F59E0B" stroke-width="2" class="footer-coin"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-white">LIMINA</span>
+                    </div>
+                    <p class="mt-4 text-gray-300">
+                        Setting your price, delivering results.
+                    </p>
+                </div>
+                <nav aria-label="Footer Shopper Links"> <h3 class="text-sm font-semibold tracking-wider uppercase">For Shoppers</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#how-it-works" class="text-base text-gray-300 hover:text-white">How It Works</a></li>
+                        <li><a href="#benefits" class="text-base text-gray-300 hover:text-white">Benefits</a></li>
+                    </ul>
+                </nav>
+                <nav aria-label="Footer Business Links"> <h3 class="text-sm font-semibold tracking-wider uppercase">For Businesses</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#businesses" class="text-base text-gray-300 hover:text-white">How It Works</a></li>
+                        <li><a href="#contact" class="text-base text-gray-300 hover:text-white">Integration</a></li>
+                    </ul>
+                </nav>
+                <nav aria-label="Footer Company Links"> <h3 class="text-sm font-semibold tracking-wider uppercase">Company</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-300 hover:text-white">About</a></li>
+                        <li><a href="#contact" class="text-base text-gray-300 hover:text-white">Contact</a></li>
+                        <li><a href="#" class="text-base text-gray-300 hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-base text-gray-300 hover:text-white">Blog</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="mt-12 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-base text-gray-400">© 2025 LIMINA Technologies Ltd. All rights reserved.</p>
+                <div class="mt-6 md:mt-0 flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-gray-300" aria-label="Limina on Facebook"><i class="fab fa-facebook-f text-lg"></i></a> <a href="#" class="text-gray-400 hover:text-gray-300" aria-label="Limina on Twitter"><i class="fab fa-twitter text-lg"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-gray-300" aria-label="Limina on LinkedIn"><i class="fab fa-linkedin-in text-lg"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-gray-300" aria-label="Limina on Instagram"><i class="fab fa-instagram text-lg"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Menu Toggle
+            const menuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const hamburgerIcon = menuButton.querySelector('.hamburger-icon');
+
+            menuButton.addEventListener('click', () => {
+                const isExpanded = menuButton.getAttribute('aria-expanded') === 'true' || false;
+                menuButton.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                hamburgerIcon.classList.toggle('open');
+            });
+
+            // Close mobile menu when a link is clicked
+            const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    menuButton.setAttribute('aria-expanded', 'false');
+                    mobileMenu.classList.add('hidden');
+                    hamburgerIcon.classList.remove('open');
+                });
+            });
+
+            // Intersection Observer for scroll animations
+            const scrollElements = document.querySelectorAll('.scroll-animate');
+            const scrollObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                        scrollObserver.unobserve(entry.target); // Optional: Unobserve after animation
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px' // Adjusted rootMargin slightly
+            });
+            
+            scrollElements.forEach(element => {
+                scrollObserver.observe(element);
+            });
+            
+            // Intersection Observer for stagger animations
+            const staggerContainers = document.querySelectorAll('.stagger-animation');
+            const staggerObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                        // Apply delays to child elements once container is in view
+                        const children = entry.target.children;
+                        for (let i = 0; i < children.length; i++) {
+                            const child = children[i];
+                            child.style.transitionDelay = `${i * 0.15}s`; // Slightly increased delay for more pronounced stagger
+                        }
+                        staggerObserver.unobserve(entry.target); // Optional: Unobserve after animation
+                    }
+                });
+            }, {
+                threshold: 0.1, // Trigger when 10% of the element is visible
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            staggerContainers.forEach(container => {
+                staggerObserver.observe(container);
+            });
+            
+            // GSAP animations for floating elements
+            gsap.utils.toArray('.floating').forEach(element => {
+                gsap.to(element, {
+                    y: -8, // Slightly increased float distance
+                    duration: 2.5, // Slightly faster
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "power1.inOut"
+                });
+            });
+
+            // Active navigation link highlighting on scroll
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link, #mobile-menu a.nav-link');
+            
+            function changeNav() {
+                let index = sections.length;
+
+                while(--index && window.scrollY + 100 < sections[index].offsetTop) {} // 100px offset
+                
+                navLinks.forEach((link) => link.classList.remove('active'));
+                // Check if the corresponding link exists before adding 'active' class
+                const activeLinkDesktop = document.querySelector(`#desktop-nav a.nav-link[href*="${sections[index].id}"]`);
+                const activeLinkMobile = document.querySelector(`#mobile-menu a.nav-link[href*="${sections[index].id}"]`);
+                
+                if(activeLinkDesktop) activeLinkDesktop.classList.add('active');
+                if(activeLinkMobile) activeLinkMobile.classList.add('active');
+            }
+
+            // Initial call to set active link on page load (if not at top)
+            changeNav();
+            // Event listener for scroll
+            window.addEventListener('scroll', changeNav);
+
+        });
+    </script>
+</body>
+</html>
