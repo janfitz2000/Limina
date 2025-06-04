@@ -1,0 +1,16 @@
+{
+  "name": "limita",
+  "version": "1.0.0",
+  "description": "Utility scripts for caching product data and scheduling conditional orders",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ioredis": "^5.6.1"
+  }
+}
