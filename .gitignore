@@ -1,0 +1,15 @@
+node_modules/
+.next/
+
+# Environment files
+.env
+.env.*
+
+# OS-specific artifacts
+.DS_Store
+Thumbs.db
+
+# IDE folders
+.vscode/
+.idea/
+
