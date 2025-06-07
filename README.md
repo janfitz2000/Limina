@@ -1,6 +1,6 @@
 # LIMINA
 
-LIMINA is building a conditional buy order checkout service. The goal is to let customers and B2B buyers commit to a purchase that only executes when predefined conditions are met – such as a specific price threshold or inventory availability. This approach helps merchants secure future sales while giving customers confidence that they’ll only pay when their terms are satisfied.
+LIMINA is building a conditional buy order checkout service. The goal is to let customers and B2C buyers commit to a purchase that only executes when predefined conditions are met – such as a specific price threshold or inventory availability. This approach helps merchants secure future sales while giving customers confidence that they’ll only pay when their terms are satisfied.
 
 ## Planned Tech Stack
 
