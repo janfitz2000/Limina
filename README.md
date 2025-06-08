@@ -10,21 +10,40 @@ LIMINA is building a conditional buy order checkout service. The goal is to let 
 - **Stripe** – payment processing
 - **Redis** – for caching and real-time messaging
 
+## Project Structure
+
+- **`index.html`** - Beautiful static landing page with full design and animations
+- **`limina-platform-new/`** - Modern Next.js application with dashboard and Supabase integration
+
 ## Development Setup
 
-1. Install [Node.js](https://nodejs.org/) (v18 or later recommended).
-2. Clone this repository:
+### For the Next.js Application (Recommended)
+
+1. Navigate to the Next.js app:
    ```bash
-   git clone <repo-url>
-   cd Limita
+   cd limina-platform-new
    ```
-3. Install dependencies (placeholder until the application is scaffolded):
+
+2. Install dependencies:
    ```bash
    npm install
    ```
-4. Start the development server (once the Next.js app exists):
+
+3. Set up environment variables:
+   ```bash
+   cp .env.local.example .env.local
+   # Edit .env.local with your Supabase credentials
+   ```
+
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-These steps will evolve as the project transitions from static HTML prototypes to a full Next.js application.
+5. Visit [http://localhost:3000](http://localhost:3000)
+
+See `limina-platform-new/README.md` for detailed setup instructions including Supabase configuration.
+
+### For the Static HTML (Quick Preview)
+
+Simply open `index.html` in your browser to see the landing page design.
