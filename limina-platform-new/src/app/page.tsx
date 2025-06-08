@@ -12,26 +12,48 @@ export default function LandingPage() {
   
   // Animation effects
   useEffect(() => {
+    // Ensure we're in the browser environment
+    if (typeof window === 'undefined') return
+
     // Scroll animation observer
     const observerOptions = {
       threshold: 0.1,
       rootMargin: '0px 0px -50px 0px'
     }
 
-    const scrollObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-in')
-          scrollObserver.unobserve(entry.target)
-        }
+    let elements: Element[] = []
+    let observer: IntersectionObserver | null = null
+
+    // Small delay to ensure DOM elements are mounted
+    const initObserver = () => {
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in')
+            observer?.unobserve(entry.target)
+          }
+        })
+      }, observerOptions)
+
+      elements = Array.from(document.querySelectorAll('.scroll-animate'))
+      elements.forEach(el => {
+        observer?.observe(el)
       })
-    }, observerOptions)
+    }
 
-    document.querySelectorAll('.scroll-animate').forEach(el => {
-      scrollObserver.observe(el)
-    })
+    // Small delay to ensure DOM is ready
+    const timeoutId = setTimeout(initObserver, 100)
 
-    return () => scrollObserver.disconnect()
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId)
+      if (observer) {
+        elements.forEach(el => {
+          observer?.unobserve(el)
+        })
+        observer.disconnect()
+      }
+    }
   }, [])
 
   const handleHeroOrderSubmit = () => {
@@ -129,7 +151,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <button 
                   onClick={() => document.getElementById('what-we-do')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="btn-glimmer px-8 py-4 rounded-full text-lg font-medium inline-flex items-center justify-center text-primary shadow-lg font-semibold"
+                  className="btn-glimmer px-8 py-4 rounded-full text-lg font-semibold inline-flex items-center justify-center text-primary shadow-lg"
                 >
                   Discover LIMINA
                   <ArrowDown className="ml-2 w-5 h-5" />

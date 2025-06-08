@@ -87,7 +87,7 @@ export class ShopifyIntegration extends BaseIntegration {
           } else {
             synced++
           }
-        } catch (err) {
+        } catch {
           errors.push(`Error processing ${shopifyProduct.title}`)
         }
       }
@@ -97,6 +97,7 @@ export class ShopifyIntegration extends BaseIntegration {
 
       return { success: errors.length === 0, synced, errors }
     } catch (error) {
+      console.error('Error in syncProducts:', error)
       return { success: false, synced: 0, errors: ['Sync failed'] }
     }
   }
@@ -137,7 +138,8 @@ export class ShopifyIntegration extends BaseIntegration {
       }
 
       return { success: errors.length === 0, updated, errors }
-    } catch {
+    } catch (error) {
+      console.error('Error in syncInventory:', error)
       return { success: false, updated: 0, errors: ['Inventory sync failed'] }
     }
   }
@@ -159,8 +161,8 @@ export class ShopifyIntegration extends BaseIntegration {
       })
 
       return response.ok
-    } catch {
-      console.error('Webhook creation failed')
+    } catch (error) {
+      console.error('Error in createWebhook:', error)
       return false
     }
   }
@@ -215,7 +217,7 @@ export class ShopifyIntegration extends BaseIntegration {
 
       return response.ok
     } catch (error) {
-      console.error('Price update failed:', error)
+      console.error('Error in updateProductPrice:', error)
       return false
     }
   }
@@ -235,7 +237,7 @@ export class ShopifyIntegration extends BaseIntegration {
         await this.updateProductPriceInternal(product.id, newPrice)
       }
     } catch (error) {
-      console.error('Product update webhook failed:', error)
+      console.error('Error in handleProductUpdate:', error)
     }
   }
 
@@ -263,7 +265,7 @@ export class ShopifyIntegration extends BaseIntegration {
       // Check for buy orders that can be fulfilled
       await this.checkBuyOrderFulfillment(productId, newPrice)
     } catch (error) {
-      console.error('Internal price update failed:', error)
+      console.error('Error in updateProductPriceInternal:', error)
     }
   }
 
@@ -282,7 +284,7 @@ export class ShopifyIntegration extends BaseIntegration {
         await this.fulfillBuyOrder(order)
       }
     } catch (error) {
-      console.error('Buy order fulfillment check failed:', error)
+      console.error('Error in checkBuyOrderFulfillment:', error)
     }
   }
 
@@ -312,7 +314,7 @@ export class ShopifyIntegration extends BaseIntegration {
           type: 'order_fulfilled'
         })
     } catch (error) {
-      console.error('Buy order fulfillment failed:', error)
+      console.error('Error in fulfillBuyOrder:', error)
     }
   }
 
@@ -373,7 +375,7 @@ export class WooCommerceIntegration extends BaseIntegration {
 
           if (!error) synced++
           else errors.push(`Failed to sync ${wcProduct.name}`)
-        } catch (err) {
+        } catch {
           errors.push(`Error processing ${wcProduct.name}`)
         }
       }

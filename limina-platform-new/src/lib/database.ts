@@ -1,4 +1,10 @@
-import { supabase } from './supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// Use service role for backend operations to bypass RLS
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // Basic types for our data
 export type Merchant = {
@@ -397,4 +403,117 @@ export function subscribeToCustomerOrders(customerId: string, callback: (payload
       callback
     )
     .subscribe()
+}
+
+// Merchant Discount Functions
+export type MerchantDiscount = {
+  id: string
+  merchant_id: string
+  product_id: string
+  discount_price: number
+  target_buy_order_ids?: string[] | null
+  target_customer_emails?: string[] | null
+  max_uses?: number | null
+  current_uses: number
+  expires_at?: string | null
+  created_at: string
+  updated_at: string
+  status: 'active' | 'used_up' | 'expired' | 'cancelled'
+}
+
+export async function createMerchantDiscount(discount: {
+  merchantId: string
+  productId: string
+  discountPrice: number
+  targetBuyOrderIds?: string[]
+  targetCustomerEmails?: string[]
+  maxUses?: number
+  expiryHours?: number
+}) {
+  try {
+    let expiresAt = null
+    if (discount.expiryHours && discount.expiryHours > 0) {
+      const expiry = new Date()
+      expiry.setHours(expiry.getHours() + discount.expiryHours)
+      expiresAt = expiry.toISOString()
+    }
+
+    const { data, error } = await supabase
+      .from('merchant_discounts')
+      .insert({
+        merchant_id: discount.merchantId,
+        product_id: discount.productId,
+        discount_price: discount.discountPrice,
+        target_buy_order_ids: discount.targetBuyOrderIds || null,
+        target_customer_emails: discount.targetCustomerEmails || null,
+        max_uses: discount.maxUses || null,
+        expires_at: expiresAt
+      })
+      .select()
+      .single()
+
+    return { data, error }
+  } catch (error: unknown) {
+    console.error('Error creating merchant discount:', error)
+    return { data: null, error }
+  }
+}
+
+export async function getMerchantDiscounts(merchantId: string, productId?: string) {
+  try {
+    let query = supabase
+      .from('merchant_discounts')
+      .select(`
+        *,
+        products (
+          id,
+          title,
+          current_price,
+          currency
+        )
+      `)
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false })
+
+    if (productId) {
+      query = query.eq('product_id', productId)
+    }
+
+    const { data, error } = await query
+    return { data, error }
+  } catch (error: unknown) {
+    console.error('Error fetching merchant discounts:', error)
+    return { data: null, error }
+  }
+}
+
+export async function activateDiscount(discountId: string) {
+  try {
+    const { data, error } = await supabase
+      .rpc('check_discount_fulfillment', { discount_id: discountId })
+
+    return { data, error }
+  } catch (error: unknown) {
+    console.error('Error activating discount:', error)
+    return { data: null, error }
+  }
+}
+
+export async function cancelDiscount(discountId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('merchant_discounts')
+      .update({ 
+        status: 'cancelled',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', discountId)
+      .select()
+      .single()
+
+    return { data, error }
+  } catch (error: unknown) {
+    console.error('Error cancelling discount:', error)
+    return { data: null, error }
+  }
 }

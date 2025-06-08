@@ -1,30 +1,91 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    // Use service role for admin operations
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    
     const { productId, newPrice } = await req.json()
 
-    // Get current user and verify merchant ownership
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) throw new Error('Authentication required')
+    if (!productId || typeof newPrice !== 'number' || newPrice <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters' },
+        { status: 400 }
+      )
+    }
 
-    // Verify merchant owns this product
+    // Get product details
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select(`
-        *,
-        merchants!inner(user_id)
-      `)
+      .select('*')
       .eq('id', productId)
       .single()
 
-    if (productError || !product) throw new Error('Product not found')
-    if (product.merchants.user_id !== user.id) throw new Error('Unauthorized')
+    if (productError || !product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      )
+    }
 
-    // Update product price
+    let shopifyUpdated = false
+
+    // Update product price in Shopify if it has a shopify_product_id
+    if (product.shopify_product_id) {
+      try {
+        const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN!
+        const accessToken = process.env.SHOPIFY_ACCESS_TOKEN!
+
+        // First get the product to find the variant ID
+        const productResponse = await fetch(
+          `https://${shopifyDomain}/admin/api/2023-10/products/${product.shopify_product_id}.json`,
+          {
+            headers: {
+              'X-Shopify-Access-Token': accessToken,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+
+        if (productResponse.ok) {
+          const productData = await productResponse.json()
+          const variantId = productData.product.variants[0]?.id
+
+          if (variantId) {
+            // Update the variant price
+            const updateResponse = await fetch(
+              `https://${shopifyDomain}/admin/api/2023-10/variants/${variantId}.json`,
+              {
+                method: 'PUT',
+                headers: {
+                  'X-Shopify-Access-Token': accessToken,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  variant: {
+                    id: variantId,
+                    price: newPrice.toString()
+                  }
+                })
+              }
+            )
+
+            shopifyUpdated = updateResponse.ok
+            if (!shopifyUpdated) {
+              console.error('Failed to update Shopify price:', await updateResponse.text())
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Shopify update error:', error)
+      }
+    }
+
+    // Update product price in our database
     const { error: updateError } = await supabase
       .from('products')
       .update({ current_price: newPrice })
@@ -33,12 +94,16 @@ export async function POST(req: NextRequest) {
     if (updateError) throw updateError
 
     // Add to price history
-    await supabase
+    const { error: historyError } = await supabase
       .from('price_history')
       .insert({
         product_id: productId,
         price: newPrice
       })
+
+    if (historyError) {
+      console.error('Failed to record price history:', historyError)
+    }
 
     // Check for buy orders that can be fulfilled
     const { data: fulfillableOrders } = await supabase
@@ -51,16 +116,18 @@ export async function POST(req: NextRequest) {
       .eq('status', 'monitoring')
       .lte('target_price', newPrice)
 
+    // Initialize fulfillment results array
+    const fulfillmentResults: Array<{
+      orderId: string
+      success: boolean
+      error?: string
+    }> = []
+
     // Fulfill eligible orders
-    const fulfillmentResults: any[] = []
     for (const order of fulfillableOrders || []) {
       try {
-        // Capture payment
-        // NOTE: You must import and initialize Stripe here if you want to use it
-        // const capturedIntent = await stripe.paymentIntents.capture(
-        //   order.escrow_payments[0].stripe_payment_intent_id
-        // )
-        // For now, just simulate success:
+        // Simulate successful payment capture for now
+        // TODO: Implement actual Stripe payment capture
         const capturedIntent = { status: 'succeeded' }
 
         if (capturedIntent.status === 'succeeded') {
@@ -74,7 +141,7 @@ export async function POST(req: NextRequest) {
             })
             .eq('id', order.id)
 
-          // Update escrow payment
+          // Update escrow payment status
           await supabase
             .from('escrow_payments')
             .update({
@@ -83,46 +150,34 @@ export async function POST(req: NextRequest) {
             })
             .eq('buy_order_id', order.id)
 
-          // Send fulfillment notifications
-          await Promise.all([
-            supabase.from('notifications').insert({
-              user_id: order.customer_id,
-              user_type: 'customer',
-              buy_order_id: order.id,
-              title: 'Order Fulfilled! 🎉',
-              message: `Your buy order has been completed! Payment of £${order.target_price} processed successfully.`,
-              type: 'order_fulfilled'
-            }),
-            supabase.from('notifications').insert({
-              user_id: product.merchants.user_id,
-              user_type: 'merchant',
-              buy_order_id: order.id,
-              title: 'Payment Received 💰',
-              message: `Buy order payment of £${order.target_price} has been processed.`,
-              type: 'order_fulfilled'
-            })
-          ])
-
-          fulfillmentResults.push({ orderId: order.id, status: 'fulfilled' })
+          fulfillmentResults.push({
+            orderId: order.id,
+            success: true
+          })
         }
-      } catch (fulfillmentError) {
-        console.error('Order fulfillment error:', fulfillmentError)
-        fulfillmentResults.push({ orderId: order.id, status: 'error', error: fulfillmentError })
+      } catch (error) {
+        console.error('Order fulfillment failed:', error)
+        fulfillmentResults.push({
+          orderId: order.id,
+          success: false,
+          error: 'Failed to fulfill order'
+        })
       }
     }
 
     return NextResponse.json({
       success: true,
-      newPrice,
-      ordersChecked: fulfillableOrders?.length || 0,
-      fulfillmentResults
+      message: 'Price updated successfully',
+      shopifyUpdated,
+      fulfillment: {
+        ordersProcessed: fulfillableOrders?.length || 0,
+        results: fulfillmentResults
+      }
     })
-
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('Price update error:', error)
+    console.error('Price update failed:', error)
     return NextResponse.json(
-      { success: false, error: errMsg },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

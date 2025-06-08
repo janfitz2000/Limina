@@ -1,9 +1,13 @@
-// src/lib/payments.ts - Comprehensive Payment System
+// src/lib/payments.ts - Stripe Connect Payment System
 import Stripe from 'stripe'
 import { supabase } from './supabase'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20'
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing STRIPE_SECRET_KEY environment variable')
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2025-05-28.basil'
 })
 
 export interface PaymentIntent {
@@ -292,7 +296,7 @@ export class PaymentService {
   }
 
   // Create payment notifications
-  private static async createPaymentNotifications(buyOrder: any, type: 'executed' | 'refunded') {
+  private static async createPaymentNotifications(buyOrder: { id: string; customer_id: string; merchant_id: string; target_price: number }, type: 'executed' | 'refunded') {
     const notifications = []
 
     if (type === 'executed') {
@@ -357,7 +361,7 @@ export class PaymentService {
 
       payments?.forEach(payment => {
         analytics.totalEscrowAmount += payment.escrow_amount
-        analytics.paymentsByStatus[payment.status]++
+        analytics.paymentsByStatus[payment.status as keyof typeof analytics.paymentsByStatus]++
 
         if (payment.status === 'released') {
           analytics.totalReleased += payment.merchant_amount

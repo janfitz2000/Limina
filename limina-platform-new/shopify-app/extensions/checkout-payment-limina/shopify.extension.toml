@@ -1,0 +1,40 @@
+# Limina Pay Later Checkout Extension
+# This creates a payment option like Klarna in Shopify checkout
+
+api_version = "2023-10"
+
+[[extensions]]
+type = "ui_extension"
+name = "limina-pay-later"
+handle = "limina-pay-later"
+
+[extensions.targeting]
+target = "purchase.checkout.payment-method-list.render-after"
+
+[extensions.settings]
+[[extensions.settings.fields]]
+key = "title"
+type = "single_line_text_field"
+name = "Payment option title"
+description = "Title shown in checkout"
+default = "Pay when price drops - Limina"
+
+[[extensions.settings.fields]]
+key = "description"
+type = "multi_line_text_field"
+name = "Payment option description"
+description = "Description shown to customers"
+default = "Set your target price and only pay if the item goes on sale"
+
+[[extensions.settings.fields]]
+key = "logo_url"
+type = "url"
+name = "Logo URL"
+description = "Logo to show next to payment option"
+
+[[extensions.settings.fields]]
+key = "max_discount_percentage"
+type = "number_integer"
+name = "Max discount percentage"
+description = "Maximum discount customers can request"
+default = 30
