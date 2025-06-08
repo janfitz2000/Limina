@@ -30,7 +30,7 @@ export abstract class BaseIntegration {
   abstract syncProducts(): Promise<{ success: boolean; synced: number; errors: string[] }>
   abstract syncInventory(): Promise<{ success: boolean; updated: number; errors: string[] }>
   abstract createWebhook(event: string, endpoint: string): Promise<boolean>
-  abstract handleWebhook(payload: any): Promise<void>
+  abstract handleWebhook(payload: unknown): Promise<void>
   abstract updateProductPrice(productId: string, price: number): Promise<boolean>
 }
 
@@ -88,7 +88,7 @@ export class ShopifyIntegration extends BaseIntegration {
             synced++
           }
         } catch (err) {
-          errors.push(`Error processing ${shopifyProduct.title}: ${err}`)
+          errors.push(`Error processing ${shopifyProduct.title}`)
         }
       }
 
@@ -97,7 +97,7 @@ export class ShopifyIntegration extends BaseIntegration {
 
       return { success: errors.length === 0, synced, errors }
     } catch (error) {
-      return { success: false, synced: 0, errors: [`Sync failed: ${error}`] }
+      return { success: false, synced: 0, errors: ['Sync failed'] }
     }
   }
 
@@ -131,14 +131,14 @@ export class ShopifyIntegration extends BaseIntegration {
             await this.updateProductPriceInternal(product.id, newPrice)
             updated++
           }
-        } catch (err) {
+        } catch {
           errors.push(`Failed to update inventory for product ${product.id}`)
         }
       }
 
       return { success: errors.length === 0, updated, errors }
-    } catch (error) {
-      return { success: false, updated: 0, errors: [`Inventory sync failed: ${error}`] }
+    } catch {
+      return { success: false, updated: 0, errors: ['Inventory sync failed'] }
     }
   }
 
@@ -159,15 +159,18 @@ export class ShopifyIntegration extends BaseIntegration {
       })
 
       return response.ok
-    } catch (error) {
-      console.error('Webhook creation failed:', error)
+    } catch {
+      console.error('Webhook creation failed')
       return false
     }
   }
 
-  async handleWebhook(payload: any) {
-    const { topic, ...data } = payload
-
+  async handleWebhook(payload: unknown) {
+    if (!payload || typeof payload !== 'object' || !('topic' in payload)) {
+      console.log('Invalid webhook payload:', payload)
+      return
+    }
+    const { topic, ...data } = payload as { topic: string; [key: string]: unknown }
     switch (topic) {
       case 'products/update':
         await this.handleProductUpdate(data)
@@ -180,7 +183,7 @@ export class ShopifyIntegration extends BaseIntegration {
     }
   }
 
-  async updateProductPrice(shopifyProductId: string, price: number) {
+  async updateProductPrice(shopifyProductId: string, price: number): Promise<boolean> {
     try {
       // First get the product and variant
       const productResponse = await fetch(
@@ -217,18 +220,17 @@ export class ShopifyIntegration extends BaseIntegration {
     }
   }
 
-  private async handleProductUpdate(productData: any) {
+  private async handleProductUpdate(productData: Record<string, unknown>) {
     try {
-      const newPrice = parseFloat(productData.variants[0]?.price || '0')
-      
+      const variants = productData.variants as Array<{ price?: string }> | undefined
+      const newPrice = parseFloat(variants?.[0]?.price || '0')
       // Find corresponding Limina product
       const { data: product } = await supabase
         .from('products')
         .select('id')
-        .eq('shopify_product_id', productData.id.toString())
+        .eq('shopify_product_id', String(productData.id))
         .eq('merchant_id', this.merchantId)
         .single()
-
       if (product) {
         await this.updateProductPriceInternal(product.id, newPrice)
       }
@@ -237,7 +239,7 @@ export class ShopifyIntegration extends BaseIntegration {
     }
   }
 
-  private async handleOrderPaid(orderData: any) {
+  private async handleOrderPaid(orderData: Record<string, unknown>) {
     // Handle when a Shopify order is paid - could trigger buy order fulfillment
     console.log('Order paid webhook received:', orderData.id)
   }
@@ -284,7 +286,7 @@ export class ShopifyIntegration extends BaseIntegration {
     }
   }
 
-  private async fulfillBuyOrder(order: any) {
+  private async fulfillBuyOrder(order: { id: string; customer_id: string; target_price: number }) {
     try {
       // Update order status
       await supabase
@@ -379,7 +381,7 @@ export class WooCommerceIntegration extends BaseIntegration {
       await this.updateLastSync()
       return { success: errors.length === 0, synced, errors }
     } catch (error) {
-      return { success: false, synced: 0, errors: [`Sync failed: ${error}`] }
+      return { success: false, synced: 0, errors: ['Sync failed'] }
     }
   }
 
@@ -407,12 +409,12 @@ export class WooCommerceIntegration extends BaseIntegration {
       })
 
       return response.ok
-    } catch (error) {
+    } catch {
       return false
     }
   }
 
-  async handleWebhook(payload: any) {
+  async handleWebhook(payload: unknown) {
     // Handle WooCommerce webhook events
     console.log('WooCommerce webhook received:', payload)
   }
@@ -434,7 +436,7 @@ export class WooCommerceIntegration extends BaseIntegration {
       })
 
       return response.ok
-    } catch (error) {
+    } catch {
       return false
     }
   }
@@ -464,12 +466,12 @@ export class IntegrationFactory {
 
 // Integration Manager
 export class IntegrationManager {
-  static async setupIntegration(merchantId: string, platform: string, credentials: any) {
+  static async setupIntegration(merchantId: string, platform: string, credentials: Record<string, string>) {
     try {
       // Save integration config
       const config: Omit<IntegrationConfig, 'id'> = {
         merchant_id: merchantId,
-        platform: platform as any,
+        platform: platform as 'shopify' | 'woocommerce' | 'magento' | 'bigcommerce' | 'squarespace',
         credentials,
         webhook_endpoints: [],
         sync_settings: {
@@ -506,8 +508,9 @@ export class IntegrationManager {
         integration: data,
         syncResult 
       }
-    } catch (error) {
-      return { success: false, error }
+    } catch {
+      const errMsg = 'Setup integration failed'
+      return { success: false, error: errMsg }
     }
   }
 
@@ -537,12 +540,13 @@ export class IntegrationManager {
       }
 
       return { success: true, results }
-    } catch (error) {
-      return { success: false, error }
+    } catch {
+      const errMsg = 'Sync merchant data failed'
+      return { success: false, error: errMsg }
     }
   }
 
-  static async handleWebhook(platform: string, payload: any) {
+  static async handleWebhook(platform: string, payload: unknown) {
     try {
       // Find integration by platform (you might want to include merchant info in webhook)
       const { data: integrations } = await supabase
@@ -557,8 +561,9 @@ export class IntegrationManager {
       }
 
       return { success: true }
-    } catch (error) {
-      return { success: false, error }
+    } catch {
+      const errMsg = 'Handle webhook failed'
+      return { success: false, error: errMsg }
     }
   }
 }

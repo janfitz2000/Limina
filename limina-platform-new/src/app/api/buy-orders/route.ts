@@ -90,8 +90,9 @@ export async function POST(request: NextRequest) {
     
     if (error) {
       console.error('Create buy order error:', error)
+      const errMsg = error instanceof Error ? error.message : String(error)
       return NextResponse.json(
-        { error: 'Failed to create buy order', details: (error as Error).message },
+        { error: 'Failed to create buy order', details: errMsg },
         { status: 500 }
       )
     }
@@ -101,9 +102,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error('API Error:', error)
+    const errMsg = error instanceof Error ? error.message : 'Internal server error'
+    console.error('API Error:', errMsg)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errMsg },
       { status: 500 }
     )
   }
