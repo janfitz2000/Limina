@@ -48,14 +48,11 @@ function Extension() {
     setIsSubmitting(true);
 
     try {
-      // Clean the Shopify product ID exactly like the working version
-      const cleanProductId = selectedProduct.merchandise.product.id
-        .replace('gid://shopify/Product/', '')
-        .replace('gid://shopify/ProductVariant/', '')
-        .split('/')[0];
+      // Pass raw product ID - API will handle cleaning
+      const productId = selectedProduct.merchandise.product.id;
 
       console.log('Making direct API call like working version:', {
-        shopify_product_id: cleanProductId,
+        shopify_product_id: productId,
         customer_email: customerEmail,
         target_price: parseFloat(offerPrice),
         current_price: parseFloat(selectedProduct.cost.amount),
@@ -70,7 +67,7 @@ function Extension() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          shopify_product_id: cleanProductId,
+          shopify_product_id: productId,
           customer_email: customerEmail,
           target_price: parseFloat(offerPrice),
           current_price: parseFloat(selectedProduct.cost.amount),

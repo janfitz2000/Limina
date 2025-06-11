@@ -38,3 +38,9 @@ type = "number_integer"
 name = "Max discount percentage"
 description = "Maximum discount customers can request"
 default = 30
+
+[[extensions.settings.fields]]
+key = "api_url"
+type = "single_line_text_field"
+name = "Limina API URL"
+description = "Base URL for Limina API (e.g., https://your-domain.com)"

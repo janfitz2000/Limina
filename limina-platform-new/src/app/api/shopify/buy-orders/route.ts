@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       console.log('Product not found, attempting to create temporary product:', productError);
       
       // Use consistent merchant ID that matches dashboard
-      const MERCHANT_ID = '123e4567-e89b-12d3-a456-426614174001'
+      const MERCHANT_ID = '123e4567-e89b-12d3-a456-426614174000'
       const { data: merchant, error: merchantError } = await supabase
         .from('merchants')
         .select('*')

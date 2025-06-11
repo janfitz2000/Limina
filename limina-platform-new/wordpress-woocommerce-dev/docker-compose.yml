@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # WordPress Database
+  wordpress-db:
+    image: mysql:8.0
+    container_name: limina-wordpress-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - wordpress_db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - limina-wp-network
+
+  # WordPress with WooCommerce
+  wordpress:
+    image: wordpress:6.7-php8.1-apache
+    container_name: limina-wordpress
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress_password
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        define('SCRIPT_DEBUG', true);
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+      - ./plugins:/var/www/html/wp-content/plugins
+      - ./themes:/var/www/html/wp-content/themes
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    ports:
+      - "8080:80"
+    depends_on:
+      - wordpress-db
+    networks:
+      - limina-wp-network
+
+  # WP-CLI for management
+  wp-cli:
+    image: wordpress:cli-2.11-php8.1
+    container_name: limina-wp-cli
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress_password
+      WORDPRESS_DB_NAME: wordpress
+    depends_on:
+      - wordpress-db
+      - wordpress
+    networks:
+      - limina-wp-network
+
+  # phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2
+    container_name: limina-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: wordpress-db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_password
+    ports:
+      - "8081:80"
+    depends_on:
+      - wordpress-db
+    networks:
+      - limina-wp-network
+
+volumes:
+  wordpress_data:
+  wordpress_db_data:
+
+networks:
+  limina-wp-network:
+    driver: bridge

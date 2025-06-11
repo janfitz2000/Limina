@@ -80,13 +80,14 @@ function Extension() {
           return null;
         }
 
-        return fetch('http://localhost:3000/api/shopify/buy-orders', {
+        const apiUrl = settings.api_url || 'http://localhost:3000';
+        return fetch(`${apiUrl}/api/shopify/buy-orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            shopify_product_id: line.merchandise.product.id.replace('gid://shopify/Product/', ''),
+            shopify_product_id: line.merchandise.product.id,
             customer_email: customerEmail,
             target_price: parseFloat(targetPrice),
             current_price: parseFloat(line.cost.amount),
