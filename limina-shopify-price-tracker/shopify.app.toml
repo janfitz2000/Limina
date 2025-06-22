@@ -1,0 +1,26 @@
+# Shopify App Configuration
+name = "Limina Price Tracker"
+client_id = ""
+application_url = "https://your-app-url.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,write_products,read_orders,read_customers,write_customers"
+
+[auth]
+redirect_urls = [
+  "https://your-app-url.com/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "https://your-dev-store.myshopify.com"
+
+[web_directories]
+web = "/"

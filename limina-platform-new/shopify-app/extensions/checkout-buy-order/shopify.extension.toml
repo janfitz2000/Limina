@@ -1,0 +1,30 @@
+# Learn more about configuring your checkout extension at https://shopify.dev/docs/api/checkout-extensions/checkout/configuration
+
+api_version = "2023-10"
+
+[[extensions]]
+type = "ui_extension"
+name = "checkout-buy-order"
+handle = "checkout-buy-order"
+
+[extensions.targeting]
+target = "purchase.checkout.block.render"
+
+[extensions.settings]
+[[extensions.settings.fields]]
+key = "banner_title"
+type = "single_line_text_field"
+name = "Banner title"
+description = "Title for the buy order banner"
+
+[[extensions.settings.fields]]
+key = "offer_percentage"
+type = "number_integer"
+name = "Default offer percentage"
+description = "Default percentage below current price for offers"
+
+[[extensions.settings.fields]]
+key = "api_url"
+type = "single_line_text_field"
+name = "Limina API URL"
+description = "Base URL for Limina API (e.g., https://your-domain.com)"

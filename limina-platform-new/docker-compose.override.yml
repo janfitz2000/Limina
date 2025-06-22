@@ -1,0 +1,16 @@
+# Docker Compose override for limina-platform-new local development
+# This file can be used with: docker-compose -f docker-compose.local.yml up
+version: '3.8'
+
+services:
+  app:
+    environment:
+      # Override for local development
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+    ports:
+      - "3001:3000"  # Use different port to avoid conflict with main orchestration
+    
+  # Override Supabase Studio port to avoid conflict
+  studio:
+    ports:
+      - "3003:3000"

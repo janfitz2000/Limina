@@ -1,0 +1,447 @@
+version: '3.8'
+
+services:
+  # ======================
+  # SHARED INFRASTRUCTURE
+  # ======================
+  
+  # PostgreSQL database shared across projects
+  postgres:
+    image: postgres:15
+    container_name: limina-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: limina
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: limina_dev_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d limina"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - limina-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: limina-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass limina_redis_password
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "limina_redis_password", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - limina-network
+
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: limina-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1025"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - limina-network
+
+  # ======================
+  # SUPABASE STACK
+  # ======================
+  
+  # Supabase Studio
+  supabase-studio:
+    image: supabase/studio:latest
+    container_name: limina-supabase-studio
+    restart: unless-stopped
+    ports:
+      - "3002:3000/tcp"
+    environment:
+      STUDIO_PG_META_URL: http://supabase-meta:8080
+      POSTGRES_PASSWORD: limina_dev_password
+      DEFAULT_ORGANIZATION: "Limina"
+      DEFAULT_PROJECT: "limina-dev"
+    depends_on:
+      supabase-meta:
+        condition: service_healthy
+    networks:
+      - limina-network
+
+  # Supabase Kong Gateway
+  supabase-kong:
+    image: kong:2.8.1
+    container_name: limina-supabase-kong
+    restart: unless-stopped
+    ports:
+      - "8000:8000/tcp"
+      - "8443:8443/tcp"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./limina-platform-new/volumes/kong:/var/lib/kong:ro
+    depends_on:
+      - supabase-auth
+      - supabase-rest
+      - supabase-realtime
+      - supabase-storage
+    networks:
+      - limina-network
+
+  # Supabase Auth
+  supabase-auth:
+    image: supabase/gotrue:v2.132.3
+    container_name: limina-supabase-auth
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:limina_dev_password@postgres:5432/limina?search_path=auth
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_URI_ALLOW_LIST: http://localhost:3000,http://localhost:3001
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-limina
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_SMTP_HOST: mailhog
+      GOTRUE_SMTP_PORT: 1025
+      GOTRUE_SMTP_USER: ""
+      GOTRUE_SMTP_PASS: ""
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@limina.dev
+      GOTRUE_MAILER_URLPATHS_INVITE: http://localhost:3000/auth/callback
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: http://localhost:3000/auth/callback
+      GOTRUE_MAILER_URLPATHS_RECOVERY: http://localhost:3000/auth/callback
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: http://localhost:3000/auth/callback
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+    networks:
+      - limina-network
+
+  # Supabase REST API
+  supabase-rest:
+    image: postgrest/postgrest:v11.2.0
+    container_name: limina-supabase-rest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://postgres:limina_dev_password@postgres:5432/limina
+      PGRST_DB_SCHEMA: public,storage,auth
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-limina
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-limina
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - limina-network
+
+  # Supabase Realtime
+  supabase-realtime:
+    image: supabase/realtime:v2.25.22
+    container_name: limina-supabase-realtime
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: limina_dev_password
+      DB_NAME: limina
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: supabaserealtime
+      API_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-limina
+      FLY_ALLOC_ID: fly123
+      FLY_APP_NAME: realtime
+      SECRET_KEY_BASE: UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8en0kjuJ4Ql08ullW
+      ERL_AFLAGS: -proto_dist inet_tcp
+      ENABLE_TAILSCALE: "false"
+      DNS_NODES: "''"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - limina-network
+
+  # Supabase Storage
+  supabase-storage:
+    image: supabase/storage-api:v0.40.4
+    container_name: limina-supabase-storage
+    restart: unless-stopped
+    environment:
+      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      POSTGREST_URL: http://supabase-rest:3000
+      PGRST_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-limina
+      DATABASE_URL: postgres://postgres:limina_dev_password@postgres:5432/limina
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://supabase-imgproxy:5001
+    volumes:
+      - storage_data:/var/lib/storage:z
+    depends_on:
+      postgres:
+        condition: service_healthy
+      supabase-rest:
+        condition: service_started
+    networks:
+      - limina-network
+
+  # Supabase Image Proxy
+  supabase-imgproxy:
+    image: darthsim/imgproxy:latest
+    container_name: limina-supabase-imgproxy
+    restart: unless-stopped
+    environment:
+      IMGPROXY_BIND: ":5001"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+    volumes:
+      - storage_data:/var/lib/storage:ro
+    networks:
+      - limina-network
+
+  # Supabase Meta
+  supabase-meta:
+    image: supabase/postgres-meta:v0.68.0
+    container_name: limina-supabase-meta
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: postgres
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: limina
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: limina_dev_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - limina-network
+
+  # ======================
+  # MAIN APPLICATIONS
+  # ======================
+  
+  # Main Limina Platform
+  platform:
+    build:
+      context: ./limina-platform-new
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: limina-platform
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Database
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      DATABASE_URL: postgres://postgres:limina_dev_password@postgres:5432/limina
+      
+      # Redis
+      REDIS_URL: redis://:limina_redis_password@redis:6379
+      
+      # Stripe (development keys)
+      STRIPE_SECRET_KEY: sk_test_your_stripe_secret_key
+      STRIPE_WEBHOOK_SECRET: whsec_your_webhook_secret
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_your_stripe_publishable_key
+      
+      # Email
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      
+      # App
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: 1
+      
+      # Shopify
+      SHOPIFY_WEBHOOK_SECRET: your_shopify_webhook_secret
+      
+      # WooCommerce
+      WOOCOMMERCE_WEBHOOK_SECRET: your_woocommerce_webhook_secret
+    volumes:
+      - ./limina-platform-new:/app:cached
+      - platform_node_modules:/app/node_modules
+      - platform_next:/app/.next
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+      supabase-kong:
+        condition: service_started
+    networks:
+      - limina-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Shopify Price Tracker
+  price-tracker:
+    build:
+      context: ./limina-shopify-price-tracker
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: limina-price-tracker
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      # Database
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      DATABASE_URL: postgres://postgres:limina_dev_password@postgres:5432/limina
+      
+      # Email
+      RESEND_API_KEY: re_test_key
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      
+      # App
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: 1
+      
+      # Shopify App
+      SHOPIFY_API_KEY: your_shopify_api_key
+      SHOPIFY_API_SECRET: your_shopify_api_secret
+      SHOPIFY_SCOPES: read_products,read_orders,write_customers
+      SHOPIFY_APP_URL: http://localhost:3001
+      SHOPIFY_WEBHOOK_SECRET: your_shopify_webhook_secret
+    volumes:
+      - ./limina-shopify-price-tracker:/app:cached
+      - tracker_node_modules:/app/node_modules
+      - tracker_next:/app/.next
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+      supabase-kong:
+        condition: service_started
+    networks:
+      - limina-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ======================
+  # DEVELOPMENT TOOLS
+  # ======================
+  
+  # PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: limina-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@limina.dev
+      PGADMIN_DEFAULT_PASSWORD: limina_admin_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - limina-network
+    profiles:
+      - tools
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: limina-redis-commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: "local:redis:6379:0:limina_redis_password"
+      HTTP_USER: admin
+      HTTP_PASSWORD: limina_redis_admin
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - limina-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    name: limina_postgres_data
+  redis_data:
+    name: limina_redis_data
+  storage_data:
+    name: limina_storage_data
+  pgadmin_data:
+    name: limina_pgadmin_data
+  platform_node_modules:
+    name: limina_platform_node_modules
+  platform_next:
+    name: limina_platform_next
+  tracker_node_modules:
+    name: limina_tracker_node_modules
+  tracker_next:
+    name: limina_tracker_next
+
+networks:
+  limina-network:
+    name: limina_network
+    driver: bridge

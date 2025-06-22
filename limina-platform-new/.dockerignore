@@ -1,0 +1,74 @@
+# Limina Platform .dockerignore for optimized builds
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# Next.js
+.next/
+out/
+
+# Environment files (will be provided via docker-compose)
+.env*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+CLAUDE.md
+SETUP_GUIDE.md
+SHOPIFY_INTEGRATION_GUIDE.md
+SUPABASE_LOCAL_SETUP.md
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Docker files (except the one being used)
+docker-compose*.yml
+Dockerfile*
+!Dockerfile.dev
+
+# Supabase local files
+supabase/.branches
+supabase/.temp
+
+# WordPress/WooCommerce development (not needed in platform container)
+wordpress-woocommerce-dev/
+
+# Volume mounts (these will be mounted from host)
+volumes/
+
+# Development scripts
+dev.sh
+cli.sh
+docker-*.sh
+
+# Build artifacts that will be regenerated
+dist/
+build/
