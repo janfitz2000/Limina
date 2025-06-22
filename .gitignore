@@ -1,5 +1,7 @@
 node_modules/
 .next/
+out/
+dist/
 
 # Environment files
 .env
@@ -12,4 +14,54 @@ Thumbs.db
 # IDE folders
 .vscode/
 .idea/
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+volumes/
+**/volumes/
+**/db/
+**/storage/
+
+# Supabase
+supabase/.temp/
+supabase/.output/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+
+# Backup
+*.bak
+
+# Misc
+*.sublime-workspace
+*.sublime-project
+
+# WordPress uploads
+wordpress-woocommerce-dev/wp-content/uploads/
+
+# Shopify local files
+limina-shopify-price-tracker/.env*
+
+# Ignore local dev scripts output
+*.local.js
+
+# Ignore test coverage
+coverage/
+
+# Ignore build artifacts
+build/
+
+# Ignore old resources
+Old Resources/
 
