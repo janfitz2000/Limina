@@ -65,3 +65,31 @@ build/
 # Ignore old resources
 Old Resources/
 
+# --- WordPress/WooCommerce: Only keep custom plugin ---
+# Ignore all plugins except limina-payment-gateway
+wordpress-woocommerce-dev/plugins/*
+!wordpress-woocommerce-dev/plugins/limina-payment-gateway/
+
+# Ignore all themes (unless you have a custom one to keep)
+wordpress-woocommerce-dev/themes/
+
+# Ignore all uploads, cache, upgrades, backups, etc.
+wordpress-woocommerce-dev/wp-content/uploads/
+wordpress-woocommerce-dev/wp-content/cache/
+wordpress-woocommerce-dev/wp-content/upgrade/
+wordpress-woocommerce-dev/wp-content/backups/
+wordpress-woocommerce-dev/wp-content/ai1wm-backups/
+
+# Ignore logs and DB dumps
+wordpress-woocommerce-dev/wp-content/*.log
+wordpress-woocommerce-dev/wp-content/*.sql
+wordpress-woocommerce-dev/wp-content/*.zip
+wordpress-woocommerce-dev/wp-content/*.tar.gz
+
+# Ignore all other standard plugins
+wordpress-woocommerce-dev/wp-content/plugins/*
+!wordpress-woocommerce-dev/wp-content/plugins/limina-payment-gateway/
+
+# Ignore all standard themes
+wordpress-woocommerce-dev/wp-content/themes/*
+
