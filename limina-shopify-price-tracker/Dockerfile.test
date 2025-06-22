@@ -1,0 +1,22 @@
+FROM node:18-alpine
+
+# Install dependencies for testing
+RUN apk add --no-cache libc6-compat curl
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies including dev dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Wait for services to be ready
+COPY docker/wait-for-services.sh /wait-for-services.sh
+RUN chmod +x /wait-for-services.sh
+
+# Test command with service wait
+CMD ["/wait-for-services.sh", "npm", "test"]

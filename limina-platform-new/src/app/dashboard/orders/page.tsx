@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Search, Filter, Download, Eye, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react'
+import { Search, Download, Eye, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react'
 
 interface Product {
   id: string
@@ -104,7 +104,6 @@ export default function OrdersPage() {
 
   const formatCurrency = (amount: number) => `£${amount.toFixed(2)}`
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString()
-  const formatDateTime = (dateString: string) => new Date(dateString).toLocaleString()
 
   const calculatePotentialSavings = (order: BuyOrder) => {
     return order.current_price - order.target_price

@@ -1,14 +1,10 @@
 // src/lib/payments.ts - Stripe Connect Payment System
 import Stripe from 'stripe'
-import { supabase } from './supabase'
+import { supabase } from './supabase-fixed'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing STRIPE_SECRET_KEY environment variable')
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-05-28.basil'
-})
+}) : null
 
 export interface PaymentIntent {
   id: string
@@ -48,6 +44,9 @@ export class PaymentService {
     expiryDays: number
   }) {
     try {
+      if (!stripe) {
+        throw new Error('Stripe not configured')
+      }
       // Calculate amounts
       const platformFeeRate = 0.025 // 2.5% platform fee
       const platformFee = Math.round(orderData.targetPrice * platformFeeRate * 100) // in cents

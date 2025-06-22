@@ -1,194 +1,169 @@
-// src/lib/auth.ts - Enhanced Authentication System
-import { supabase } from './supabase'
-import { User } from '@supabase/supabase-js'
+// Real authentication using Supabase Auth
+import { supabase } from './supabase-fixed'
+import { Database } from '@/types/database'
 
-export type UserRole = 'merchant' | 'customer' | 'admin'
-
-export interface LiminaUser extends User {
-  role: UserRole
-  profile: MerchantProfile | CustomerProfile
-}
-
-export interface MerchantProfile {
+export type User = {
   id: string
-  name: string
   email: string
-  company_name: string
-  website?: string
-  shopify_domain?: string
-  stripe_account_id?: string
-  subscription_tier: 'starter' | 'professional' | 'enterprise'
-  created_at: string
+  name: string
+  role: 'merchant' | 'customer'
+  merchant_id?: string
 }
 
-export interface CustomerProfile {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  preferences: {
-    notifications: boolean
-    email_alerts: boolean
-    sms_alerts: boolean
-  }
-  created_at: string
-}
+export type MerchantProfile = Database['public']['Tables']['merchants']['Row']
 
-// Enhanced authentication functions
-export class AuthService {
-  
-  // Sign up as merchant
-  static async signUpMerchant(data: {
-    email: string
-    password: string
-    companyName: string
-    name: string
-    website?: string
-  }) {
-    try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            role: 'merchant',
-            name: data.name,
-            company_name: data.companyName
-          }
-        }
-      })
-
-      if (authError) throw authError
-
-      // Create merchant profile
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('merchants')
-          .insert({
-            id: authData.user.id,
-            name: data.name,
-            email: data.email,
-            company_name: data.companyName,
-            website: data.website,
-            subscription_tier: 'starter'
-          })
-
-        if (profileError) throw profileError
-      }
-
-      return { data: authData, error: null }
-    } catch (error) {
-      return { data: null, error }
-    }
-  }
-
-  // Sign up as customer
-  static async signUpCustomer(data: {
-    email: string
-    password: string
-    name: string
-    phone?: string
-  }) {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            role: 'customer',
-            name: data.name
-          }
-        }
-      })
-
-      if (authError) throw authError
-
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('customers')
-          .insert({
-            id: authData.user.id,
-            email: data.email,
-            name: data.name,
-            phone: data.phone,
-            preferences: {
-              notifications: true,
-              email_alerts: true,
-              sms_alerts: false
-            }
-          })
-
-        if (profileError) throw profileError
-      }
-
-      return { data: authData, error: null }
-    } catch (error) {
-      return { data: null, error }
-    }
-  }
-
-  // Get current user with profile
-  static async getCurrentUser(): Promise<{ user: LiminaUser | null, error: any }> {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      
-      if (error || !user) return { user: null, error }
-
-      const role = user.user_metadata.role as UserRole
-      let profile = null
-
-      if (role === 'merchant') {
-        const { data } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        profile = data
-      } else if (role === 'customer') {
-        const { data } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        profile = data
-      }
-
-      return {
-        user: { ...user, role, profile } as LiminaUser,
-        error: null
-      }
-    } catch (error) {
-      return { user: null, error }
-    }
-  }
-
-  // Role-based route protection
-  static async requireRole(requiredRole: UserRole): Promise<boolean> {
-    const { user } = await this.getCurrentUser()
-    return user?.role === requiredRole
-  }
-
-  // Multi-tenant data access
-  static async getMerchantProducts(merchantId: string) {
-    const { user } = await this.getCurrentUser()
+// Get current authenticated user
+export const getCurrentUser = async (): Promise<User | null> => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
     
-    // Only allow merchants to access their own products
-    if (user?.role === 'merchant' && user.id !== merchantId) {
-      throw new Error('Unauthorized: Cannot access other merchant data')
+    if (error || !user) {
+      return null
     }
 
-    const { data, error } = await supabase
-      .from('products')
+    // Get merchant profile if user is a merchant
+    const { data: merchant } = await supabase
+      .from('merchants')
       .select('*')
-      .eq('merchant_id', merchantId)
+      .eq('user_id', user.id)
+      .single()
 
-    return { data, error }
+    if (merchant) {
+      return {
+        id: user.id,
+        email: user.email!,
+        name: merchant.name,
+        role: 'merchant',
+        merchant_id: merchant.id
+      }
+    }
+
+    // Default to customer role if no merchant profile
+    return {
+      id: user.id,
+      email: user.email!,
+      name: user.user_metadata?.name || user.email!,
+      role: 'customer'
+    }
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    return null
+  }
+}
+
+// Get full merchant profile
+export const getMerchantProfile = async (): Promise<MerchantProfile | null> => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error || !user) {
+      return null
+    }
+
+    const { data: merchant, error: merchantError } = await supabase
+      .from('merchants')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (merchantError) {
+      console.error('Error getting merchant profile:', merchantError)
+      return null
+    }
+
+    return merchant
+  } catch (error) {
+    console.error('Error getting merchant profile:', error)
+    return null
+  }
+}
+
+// Check if user is authenticated
+export const isAuthenticated = async (): Promise<boolean> => {
+  const user = await getCurrentUser()
+  return user !== null
+}
+
+// Require authentication (throws if not authenticated)
+export const requireAuth = async (): Promise<User> => {
+  const user = await getCurrentUser()
+  if (!user) {
+    throw new Error('Authentication required')
+  }
+  return user
+}
+
+// Require merchant authentication
+export const requireMerchantAuth = async (): Promise<{ user: User; merchant: MerchantProfile }> => {
+  const user = await requireAuth()
+  
+  if (user.role !== 'merchant' || !user.merchant_id) {
+    throw new Error('Merchant authentication required')
   }
 
-  // Sign out
-  static async signOut() {
-    return await supabase.auth.signOut()
+  const merchant = await getMerchantProfile()
+  if (!merchant) {
+    throw new Error('Merchant profile not found')
+  }
+
+  return { user, merchant }
+}
+
+// Sign out
+export const signOut = async (): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Error signing out:', error)
+      throw error
+    }
+    
+    // Clear any local storage or session data if needed
+    if (typeof window !== 'undefined') {
+      // Clear any cached data
+      localStorage.removeItem('supabase.auth.token')
+      sessionStorage.clear()
+    }
+  } catch (error) {
+    console.error('Sign out error:', error)
+    throw error
+  }
+}
+
+// Update merchant profile
+export const updateMerchantProfile = async (updates: Partial<MerchantProfile>): Promise<MerchantProfile | null> => {
+  try {
+    const { user } = await requireMerchantAuth()
+    
+    const { data, error } = await supabase
+      .from('merchants')
+      .update(updates)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating merchant profile:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error updating merchant profile:', error)
+    return null
+  }
+}
+
+// Complete onboarding
+export const completeOnboarding = async (): Promise<boolean> => {
+  try {
+    const updated = await updateMerchantProfile({ 
+      onboarding_completed: true 
+    })
+    return updated !== null
+  } catch (error) {
+    console.error('Error completing onboarding:', error)
+    return false
   }
 }
 
@@ -196,30 +171,47 @@ export class AuthService {
 import { useState, useEffect } from 'react'
 
 export function useAuth() {
-  const [user, setUser] = useState<LiminaUser | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial user
-    AuthService.getCurrentUser().then(({ user }) => {
-      setUser(user)
-      setLoading(false)
+    getCurrentUser().then((user) => {
+      if (mounted) {
+        setUser(user)
+        setLoading(false)
+      }
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
-          const { user } = await AuthService.getCurrentUser()
-          setUser(user)
-        } else {
+        if (!mounted) return
+
+        console.log('Auth state change:', event, session?.user?.id)
+        
+        if (event === 'SIGNED_OUT' || !session?.user) {
           setUser(null)
+          setLoading(false)
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          try {
+            const user = await getCurrentUser()
+            setUser(user)
+          } catch (error) {
+            console.error('Error getting user after auth change:', error)
+            setUser(null)
+          }
+          setLoading(false)
         }
-        setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   return {
@@ -227,47 +219,6 @@ export function useAuth() {
     loading,
     isMerchant: user?.role === 'merchant',
     isCustomer: user?.role === 'customer',
-    signUpMerchant: AuthService.signUpMerchant,
-    signUpCustomer: AuthService.signUpCustomer,
-    signOut: AuthService.signOut
+    signOut
   }
 }
-
-// Enhanced RLS policies (SQL)
-/*
--- Enhanced Row Level Security
-
--- Merchants can only access their own data
-CREATE POLICY "merchants_own_data" ON merchants
-  FOR ALL USING (auth.uid()::text = id);
-
-CREATE POLICY "merchants_own_products" ON products
-  FOR ALL USING (auth.uid()::text = merchant_id);
-
-CREATE POLICY "merchants_own_orders" ON buy_orders
-  FOR ALL USING (auth.uid()::text = merchant_id);
-
--- Customers can only access their own data
-CREATE POLICY "customers_own_data" ON customers
-  FOR ALL USING (auth.uid()::text = id);
-
-CREATE POLICY "customers_own_orders" ON buy_orders
-  FOR ALL USING (auth.uid()::text = customer_id);
-
--- Admins can access everything (add admin role check)
-CREATE POLICY "admin_full_access" ON merchants
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM auth.users 
-      WHERE auth.uid() = id 
-      AND raw_user_meta_data->>'role' = 'admin'
-    )
-  );
-
--- Enable RLS on all tables
-ALTER TABLE merchants ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE buy_orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-*/

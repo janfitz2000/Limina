@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, TrendingUp, Users, DollarSign, Activity, AlertTriangle, CreditCard, Store, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
+import { supabase } from '@/lib/supabase-fixed'
+import { ShoppingCart, TrendingUp, DollarSign, Activity, AlertTriangle, Store, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
 interface Product {
   id: string
@@ -37,35 +39,73 @@ interface Stats {
 }
 
 export default function DashboardOverview() {
+  const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
-  const [products, setProducts] = useState<Product[]>([])
-
-  // Using the TechStore merchant ID from our seed data
-  const MERCHANT_ID = '123e4567-e89b-12d3-a456-426614174000'
+  const [stores, setStores] = useState<any[]>([])
 
   useEffect(() => {
+    if (authLoading || !user || !user.merchant_id) return
+
     const fetchData = async () => {
       try {
         setLoading(true)
         
         // Fetch buy orders for this merchant
-        const ordersResponse = await fetch(`/api/buy-orders?merchantId=${MERCHANT_ID}`)
-        const ordersData = await ordersResponse.json()
-        
-        // Fetch products for this merchant
-        const productsResponse = await fetch(`/api/products?merchantId=${MERCHANT_ID}`)
-        const productsData = await productsResponse.json()
-        
-        // Fetch stats for this merchant
-        const statsResponse = await fetch(`/api/merchants/${MERCHANT_ID}/stats`)
-        const statsData = await statsResponse.json()
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('buy_orders')
+          .select(`
+            *,
+            products (
+              id,
+              title,
+              current_price,
+              price,
+              currency,
+              image_url
+            ),
+            customers (
+              id,
+              email,
+              name
+            )
+          `)
+          .eq('merchant_id', user.merchant_id)
+          .order('created_at', { ascending: false })
+          .limit(10)
 
-        if (ordersData.buy_orders) setBuyOrders(ordersData.buy_orders)
-        if (productsData.products) setProducts(productsData.products)
-        if (statsData.stats) setStats(statsData.stats)
+        if (ordersError) throw ordersError
+        
+        // Fetch stores for this merchant
+        const { data: storesData, error: storesError } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('merchant_id', user.merchant_id)
+
+        if (storesError) throw storesError
+
+        // Calculate basic stats from orders
+        const ordersCount = ordersData?.length || 0
+        const monitoring = ordersData?.filter(o => o.status === 'monitoring').length || 0
+        const fulfilled = ordersData?.filter(o => o.status === 'fulfilled').length || 0
+        const totalRevenue = ordersData?.filter(o => o.status === 'fulfilled')
+          .reduce((sum, o) => sum + Number(o.target_price), 0) || 0
+        const conversionRate = ordersCount > 0 ? Math.round((fulfilled / ordersCount) * 100) : 0
+
+        setBuyOrders(ordersData || [])
+        setStores(storesData || [])
+        setStats({
+          total: ordersCount,
+          monitoring,
+          fulfilled,
+          pending: 0,
+          cancelled: 0,
+          totalRevenue,
+          avgDiscount: 0,
+          conversionRate
+        })
         
         setLoading(false)
       } catch (err) {
@@ -76,7 +116,7 @@ export default function DashboardOverview() {
     }
 
     fetchData()
-  }, [])
+  }, [user, authLoading])
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -92,7 +132,7 @@ export default function DashboardOverview() {
   const formatCurrency = (amount: number) => `£${amount.toFixed(2)}`
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString()
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">

@@ -1,6 +1,43 @@
 version: '3.8'
 
 services:
+  # Limina Platform (Next.js app)
+  limina-platform:
+    build: 
+      context: ..
+      dockerfile: Dockerfile
+    container_name: limina-platform
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=http://host.docker.internal:54321
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_123}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_123}
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    networks:
+      - limina-wp-network
+
+  # Supabase (local development)
+  supabase-db:
+    image: supabase/postgres:15.1.1.78
+    container_name: limina-supabase-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your-super-secret-and-long-postgres-password
+      POSTGRES_PORT: 5432
+    volumes:
+      - supabase_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - limina-wp-network
+
   # WordPress Database
   wordpress-db:
     image: mysql:8.0
@@ -85,6 +122,7 @@ services:
 volumes:
   wordpress_data:
   wordpress_db_data:
+  supabase_db_data:
 
 networks:
   limina-wp-network:

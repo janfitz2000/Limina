@@ -2,6 +2,39 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
+interface WooCommerceProduct {
+  id: number;
+  name: string;
+  price: string;
+  regular_price: string;
+  description?: string;
+  short_description?: string;
+  images?: Array<{ src: string }>;
+}
+
+interface WooCommerceOrder {
+  id: number;
+  status: string;
+}
+
+interface SupabaseClient {
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        single: () => Promise<{ data: unknown; error: unknown }>;
+      };
+    };
+    update: (data: Record<string, unknown>) => {
+      eq: (column: string, value: string) => Promise<{ error: unknown }>;
+    };
+    insert: (data: Record<string, unknown>) => {
+      select: () => {
+        single: () => Promise<{ data: unknown; error: unknown }>;
+      };
+    };
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     console.log('[WooCommerce Webhook] POST request received');
@@ -68,7 +101,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleProductUpdate(supabase: any, productData: any) {
+async function handleProductUpdate(supabase: SupabaseClient, productData: WooCommerceProduct) {
   console.log('[WooCommerce Webhook] Processing product update:', productData.id);
   
   const woocommerceProductId = productData.id.toString();
@@ -129,7 +162,7 @@ async function handleProductUpdate(supabase: any, productData: any) {
   }
 }
 
-async function handleProductCreate(supabase: any, productData: any) {
+async function handleProductCreate(supabase: SupabaseClient, productData: WooCommerceProduct) {
   console.log('[WooCommerce Webhook] Creating new product:', productData.id);
   
   const woocommerceProductId = productData.id.toString();
@@ -172,7 +205,7 @@ async function handleProductCreate(supabase: any, productData: any) {
   console.log('[WooCommerce Webhook] Product created successfully:', newProduct.id);
 }
 
-async function handleProductDelete(supabase: any, productData: any) {
+async function handleProductDelete(supabase: SupabaseClient, productData: WooCommerceProduct) {
   console.log('[WooCommerce Webhook] Deleting product:', productData.id);
   
   const woocommerceProductId = productData.id.toString();
@@ -207,7 +240,7 @@ async function handleProductDelete(supabase: any, productData: any) {
   console.log('[WooCommerce Webhook] Product deleted successfully');
 }
 
-async function handleOrderUpdate(supabase: any, orderData: any) {
+async function handleOrderUpdate(supabase: SupabaseClient, orderData: WooCommerceOrder) {
   console.log('[WooCommerce Webhook] Processing order update:', orderData.id);
   
   // Handle order status changes that might affect buy orders
@@ -232,7 +265,7 @@ async function handleOrderUpdate(supabase: any, orderData: any) {
   }
 }
 
-async function checkAndFulfillBuyOrders(supabase: any, product: any, newPrice: number) {
+async function checkAndFulfillBuyOrders(supabase: SupabaseClient, product: { id: string }, newPrice: number) {
   console.log(`[WooCommerce Webhook] Checking buy orders for product ${product.id} at new price ${newPrice}`);
   
   // Find buy orders that can be fulfilled

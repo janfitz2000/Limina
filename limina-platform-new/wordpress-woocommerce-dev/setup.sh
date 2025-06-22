@@ -34,7 +34,10 @@ docker-compose run --rm wp-cli plugin install wp-log-viewer --activate
 
 # Copy our Limina payment plugin
 echo "💳 Installing Limina Payment Gateway..."
-cp -r ../woocommerce-limina-payment ./wp-content/plugins/
+docker-compose exec wordpress mkdir -p /var/www/html/wp-content/plugins/limina-payment-gateway
+docker cp ../woocommerce-limina-payment/limina-payment-gateway.php limina-wordpress:/var/www/html/wp-content/plugins/limina-payment-gateway/
+docker cp ../woocommerce-limina-payment/includes limina-wordpress:/var/www/html/wp-content/plugins/limina-payment-gateway/
+docker cp ../woocommerce-limina-payment/assets limina-wordpress:/var/www/html/wp-content/plugins/limina-payment-gateway/
 docker-compose run --rm wp-cli plugin activate limina-payment-gateway
 
 # Set up WooCommerce basics
@@ -48,13 +51,10 @@ docker-compose run --rm wp-cli option update woocommerce_product_type "both"
 docker-compose run --rm wp-cli option update woocommerce_allow_tracking "no"
 
 # Enable Limina payment gateway
-docker-compose run --rm wp-cli option update woocommerce_limina_payment_settings '{
-  "enabled": "yes",
-  "title": "Pay when price drops - Limina",
-  "description": "Set your target price and only pay if items go on sale. No upfront payment required.",
-  "api_url": "http://host.docker.internal:3000",
-  "max_discount_percentage": "30"
-}' --format=json
+docker-compose run --rm wp-cli option update woocommerce_limina_payment_settings 'a:5:{s:7:"enabled";s:3:"yes";s:5:"title";s:28:"Pay when price drops - Limina";s:11:"description";s:83:"Set your target price and only pay if items go on sale. No upfront payment required.";s:7:"api_url";s:29:"http://limina-platform:3000";s:23:"max_discount_percentage";s:2:"30";}' --format=none
+
+# Also ensure the payment method is enabled in WooCommerce
+docker-compose run --rm wp-cli option update woocommerce_gateway_order 'limina_payment'
 
 # Create sample products
 echo "📦 Creating sample products..."

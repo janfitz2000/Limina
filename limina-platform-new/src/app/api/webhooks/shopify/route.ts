@@ -71,8 +71,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const challenge = searchParams.get('hub.challenge')
-  const verify_token = searchParams.get('hub.verify_token')
-
+  
   // Basic verification - you might want to check verify_token against a stored value
   if (challenge) {
     return new NextResponse(challenge, { status: 200 })

@@ -1,0 +1,1 @@
+2025-06-21T11:41:32+00:00 ERROR Failed to get payment providers: Automattic\WooCommerce\Internal\Admin\Settings\PaymentProviders::enhance_order_map(): Argument #1 ($order_map) must be of type array, string given, called in /var/www/html/wp-content/plugins/woocommerce/src/Internal/Admin/Settings/PaymentProviders.php on line 690 CONTEXT: {"error":{}}

@@ -1,69 +1,32 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/database'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { merchantId: string } }
+  { params }: { params: Promise<{ merchantId: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) throw new Error('Authentication required')
+    const { merchantId } = await params
+    const db = createClient()
 
-    // Verify merchant ownership
-    const { data: merchant, error: merchantError } = await supabase
-      .from('merchants')
-      .select('id')
-      .eq('id', params.merchantId)
-      .eq('user_id', user.id)
-      .single()
-    if (merchantError || !merchant) throw new Error('Unauthorized')
-
-    // Get comprehensive analytics
-    const [
-      { data: orders },
-      { data: products },
-      { data: payments },
-      { data: recentActivity }
-    ] = await Promise.all([
-      // Buy orders analytics
-      supabase
-        .from('buy_orders')
-        .select(`
-          *,
-          products!inner(title, current_price, price)
-        `)
-        .eq('merchant_id', params.merchantId),
-      // Products with demand data
-      supabase
-        .from('products')
-        .select(`
-          *,
-          buy_orders(count)
-        `)
-        .eq('merchant_id', params.merchantId),
-      // Payment analytics
-      supabase
-        .from('escrow_payments')
-        .select(`
-          *,
-          buy_orders!inner(merchant_id)
-        `)
-        .eq('buy_orders.merchant_id', params.merchantId),
-      // Recent activity
-      supabase
-        .from('buy_orders')
-        .select(`
-          id,
-          status,
-          target_price,
-          created_at,
-          fulfilled_at,
-          products!inner(title),
-          customers!inner(name, email)
-        `)
-        .eq('merchant_id', params.merchantId)
+    // Fetch merchant data
+    const [orders, products, payments, recentActivity] = await Promise.all([
+      db.from('buy_orders')
+        .select('*')
+        .eq('merchant_id', merchantId)
+        .order('created_at', { ascending: false }),
+      
+      db.from('products')
+        .select('*')
+        .eq('merchant_id', merchantId),
+        
+      db.from('escrow_payments')
+        .select('*')
+        .eq('merchant_id', merchantId),
+        
+      db.from('buy_orders')
+        .select('*')
+        .eq('merchant_id', merchantId)
         .order('created_at', { ascending: false })
         .limit(10)
     ])
@@ -71,20 +34,20 @@ export async function GET(
     // Calculate analytics
     const analytics = {
       overview: {
-        totalOrders: orders?.length || 0,
-        activeOrders: orders?.filter((o: any) => o.status === 'monitoring').length || 0,
-        fulfilledOrders: orders?.filter((o: any) => o.status === 'fulfilled').length || 0,
-        totalRevenue: payments?.filter((p: any) => p.status === 'released')
-          .reduce((sum: number, p: any) => sum + p.merchant_amount, 0) || 0,
-        averageOrderValue: orders?.length ? 
-          orders.reduce((sum: number, o: any) => sum + o.target_price, 0) / orders.length : 0,
-        conversionRate: orders?.length ? 
-          (orders.filter((o: any) => o.status === 'fulfilled').length / orders.length) * 100 : 0
+        totalOrders: orders.data?.length || 0,
+        activeOrders: orders.data?.filter((o: { status: string }) => o.status === 'monitoring').length || 0,
+        fulfilledOrders: orders.data?.filter((o: { status: string }) => o.status === 'fulfilled').length || 0,
+        totalRevenue: payments.data?.filter((p: { status: string }) => p.status === 'released')
+          .reduce((sum: number, p: { merchant_amount: number }) => sum + p.merchant_amount, 0) || 0,
+        averageOrderValue: orders.data?.length ? 
+          orders.data.reduce((sum: number, o: { target_price: number }) => sum + o.target_price, 0) / orders.data.length : 0,
+        conversionRate: orders.data?.length ? 
+          (orders.data.filter((o: { status: string }) => o.status === 'fulfilled').length / orders.data.length) * 100 : 0
       },
-      demandByPrice: products?.map((product: any) => {
-        const productOrders = orders?.filter((o: any) => o.product_id === product.id) || []
+      demandByPrice: products.data?.map((product: { id: string; title: string; current_price: number }) => {
+        const productOrders = orders.data?.filter((o: { product_id: string }) => o.product_id === product.id) || []
         const demandByPricePoint: Record<number, number> = {}
-        productOrders.forEach((order: any) => {
+        productOrders.forEach((order: { target_price: number }) => {
           const pricePoint = Math.round(order.target_price / 50) * 50 // Round to nearest £50
           demandByPricePoint[pricePoint] = (demandByPricePoint[pricePoint] || 0) + 1
         })
@@ -99,7 +62,7 @@ export async function GET(
           }))
         }
       }),
-      recentActivity,
+      recentActivity: recentActivity.data,
       trends: {
         daily: [],
         weekly: [],
@@ -107,15 +70,12 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      analytics
-    })
+    return NextResponse.json(analytics)
+
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('Analytics error:', errMsg)
+    console.error('Analytics API error:', error)
     return NextResponse.json(
-      { success: false, error: errMsg },
+      { error: 'Failed to fetch analytics' },
       { status: 500 }
     )
   }

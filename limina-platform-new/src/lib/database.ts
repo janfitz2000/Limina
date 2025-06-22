@@ -1,10 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 // Use service role for backend operations to bypass RLS
-const supabase = createClient(
+const supabase = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// Export the client function for reuse
+export const createClient = () => supabase
 
 // Basic types for our data
 export type Merchant = {

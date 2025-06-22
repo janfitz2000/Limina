@@ -3,12 +3,19 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20'
-})
+}) : null
 
 export async function POST(req: NextRequest) {
   try {
+    if (!stripe) {
+      return NextResponse.json(
+        { success: false, error: 'Payment system not configured' },
+        { status: 500 }
+      )
+    }
+
     const supabase = createRouteHandlerClient({ cookies })
     const { 
       productId, 

@@ -1,0 +1,21 @@
+FROM node:18-alpine
+
+RUN apk add --no-cache libc6-compat curl
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Wait for app to be ready
+COPY docker/wait-for-app.sh /wait-for-app.sh
+RUN chmod +x /wait-for-app.sh
+
+# Demo seeding command
+CMD ["/wait-for-app.sh", "node", "scripts/seed-demo-data.js"]

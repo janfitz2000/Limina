@@ -1,9 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Logo } from '@/components/Logo'
+import { useAuth, signOut } from '@/lib/auth'
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
   { name: 'Products', href: '/dashboard/products', icon: Store },
+  { name: 'Stores', href: '/dashboard/stores', icon: Store },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -31,6 +33,43 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== 'merchant')) {
+      router.push('/auth')
+    }
+  }, [user, loading, router])
+
+  const handleSignOut = async () => {
+    if (!confirm('Are you sure you want to sign out?')) {
+      return
+    }
+
+    try {
+      await signOut()
+      // Force a complete page refresh to clear all state
+      window.location.href = '/auth'
+    } catch (error) {
+      console.error('Sign out failed:', error)
+      // Even if sign out fails, redirect to auth page
+      alert('Sign out failed, but you will be redirected to the login page.')
+      window.location.href = '/auth'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!user || user.role !== 'merchant') {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,14 +114,17 @@ export default function DashboardLayout({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                TechStore
+                {user.name}
               </p>
               <p className="text-xs text-gray-500 truncate">
                 Merchant Account
               </p>
             </div>
           </div>
-          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors">
+          <button 
+            onClick={handleSignOut}
+            className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+          >
             <LogOut className="mr-3 h-4 w-4" />
             Sign out
           </button>

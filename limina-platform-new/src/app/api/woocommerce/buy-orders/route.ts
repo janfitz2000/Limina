@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     // Find or create the product in our database
     console.log('Looking for WooCommerce product with ID:', woocommerce_product_id);
     
-    let { data: product, error: productError } = await supabase
+    const { data: product, error: productError } = await supabase
       .from('products')
       .select('*')
       .eq('woocommerce_product_id', woocommerce_product_id)

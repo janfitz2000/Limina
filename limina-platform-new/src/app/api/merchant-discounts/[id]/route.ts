@@ -5,11 +5,11 @@ import { NextRequest, NextResponse } from 'next/server'
 // Activate/fulfill a specific discount
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
-    const discountId = params.id
+    const discountId = (await params).id
 
     // Get current user and verify merchant ownership
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -52,11 +52,11 @@ export async function POST(
 // Cancel a discount
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
-    const discountId = params.id
+    const discountId = (await params).id
 
     // Get current user and verify merchant ownership
     const { data: { user }, error: userError } = await supabase.auth.getUser()

@@ -16,10 +16,6 @@ interface Product {
   updated_at: string
 }
 
-interface PriceUpdateData {
-  productId: string
-  newPrice: number
-}
 
 export default function ProductsPage() {
   const [loading, setLoading] = useState(true)

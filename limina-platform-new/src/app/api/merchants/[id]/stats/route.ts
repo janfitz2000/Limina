@@ -4,10 +4,10 @@ import { getMerchantStats } from '@/lib/database'
 // GET /api/merchants/[id]/stats
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const merchantId = params.id
+    const merchantId = (await params).id
 
     if (!merchantId) {
       return NextResponse.json(

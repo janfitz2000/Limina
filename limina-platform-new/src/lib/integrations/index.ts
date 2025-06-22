@@ -1,5 +1,5 @@
 // src/lib/integrations/index.ts - Platform Integration System
-import { supabase } from '../supabase'
+import { supabase } from '../supabase-fixed'
 
 export interface IntegrationConfig {
   id: string
@@ -382,7 +382,7 @@ export class WooCommerceIntegration extends BaseIntegration {
 
       await this.updateLastSync()
       return { success: errors.length === 0, synced, errors }
-    } catch (error) {
+    } catch {
       return { success: false, synced: 0, errors: ['Sync failed'] }
     }
   }

@@ -1,0 +1,265 @@
+/* Limina Payment Gateway - Checkout Styles */
+
+.limina-payment-container {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    background: #f8fafc;
+}
+
+.limina-intro {
+    background: #0f172a;
+    color: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.limina-intro h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #fbbf24;
+}
+
+.limina-intro ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.limina-intro li {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.limina-price-settings {
+    margin: 20px 0;
+}
+
+.limina-price-settings h4 {
+    margin: 0 0 15px 0;
+    color: #1e293b;
+    font-size: 16px;
+}
+
+.limina-product-row {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    gap: 15px;
+}
+
+.product-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 12px;
+}
+
+.product-image img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.product-details h5 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.product-meta {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.price-controls {
+    text-align: right;
+    min-width: 200px;
+}
+
+.price-controls label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+.price-input-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.limina-target-price {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: right;
+}
+
+.limina-target-price:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.currency {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.savings-display {
+    font-size: 12px;
+    color: #059669;
+    font-weight: 600;
+}
+
+.limina-totals-summary {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.totals-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.totals-row:last-child {
+    border-bottom: none;
+}
+
+.target-row {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.savings-row {
+    background: #f0f9f4;
+    margin: 10px -15px -15px -15px;
+    padding: 15px;
+    border-radius: 0 0 6px 6px;
+    color: #047857;
+    font-weight: 700;
+}
+
+.limina-email-field {
+    margin: 20px 0;
+}
+
+.limina-email-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #1e293b;
+}
+
+.limina-email-field input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.limina-email-field input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.limina-email-field small {
+    display: block;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.limina-terms {
+    margin: 20px 0;
+    padding: 15px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+}
+
+.limina-terms label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: #92400e;
+    cursor: pointer;
+}
+
+.limina-terms input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.limina-thankyou {
+    background: #f0f9f4;
+    border: 2px solid #059669;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.limina-thankyou h3 {
+    color: #047857;
+    margin: 0 0 15px 0;
+}
+
+.limina-next-steps h4 {
+    color: #065f46;
+    margin: 15px 0 10px 0;
+}
+
+.limina-next-steps ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.limina-next-steps li {
+    margin: 5px 0;
+    color: #047857;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .limina-product-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .product-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .price-controls {
+        text-align: center;
+        min-width: auto;
+    }
+    
+    .totals-row {
+        font-size: 14px;
+    }
+}

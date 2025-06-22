@@ -2,20 +2,45 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL REMEMBER: THIS IS A DOCKER-ONLY DEVELOPMENT ENVIRONMENT
+- **NEVER use local npm commands** - everything runs in Docker containers
+- **ALWAYS use `./cli.sh platform <command>`** for all Node.js operations
+- **ALWAYS use `cd .. && ./dev.sh`** to start the development environment
+- **NO LOCAL INSTALLS** - all dependencies must be installed via Docker
+- **After code changes**: Restart containers with `docker restart limina-platform` then `docker exec limina-platform npm run dev`
+- **Development URL**: http://localhost:3000 (primary) or http://localhost:3001 (may vary based on port availability)
+- **Environment Variables**: Uses fallback Supabase demo configuration if local Supabase is not running
+
 ## Development Commands
 
-### Core Commands
-- `npm run dev` - Start Next.js development server with turbopack
-- `npm run build` - Build the application for production
-- `npm run lint` - Run ESLint for code linting
-- `npm start` - Start production server
+### Core Commands (Docker-Only Development)
+- `./dev.sh` - Start entire development environment (from project root)
+- `./cli.sh platform npm run dev` - Start Next.js development server (already running in container)
+- `./cli.sh platform npm run build` - Build the application for production
+- `./cli.sh platform npm run lint` - Run ESLint for code linting
+- `./cli.sh platform npm start` - Start production server
 
-### Local Development Setup
+### Docker Development Setup (Recommended)
+- `cd .. && ./dev.sh` - Start entire development environment (from project root)
+- `./cli.sh platform install` - Install dependencies in container
+- `./cli.sh platform npx supabase db reset` - Reset database with fresh migrations
+- `./cli.sh platform bash` - Access container shell for advanced operations
+- `./cli.sh status` - Check all container status
+
+### Legacy Local Development (Docker Required)
 - `npm install --legacy-peer-deps` - Install dependencies (legacy flag needed for React 19 + lucide-react compatibility)
 - `supabase start` - Start local Supabase services (requires Docker)
 - `supabase db reset` - Reset database with fresh migrations and seed data
 - `supabase stop` - Stop all Supabase services
 - `npm run typecheck` - Run TypeScript type checking (if available)
+
+### Docker Development (WooCommerce Integration)
+- `cd .. && ./dev.sh` - Start unified development environment (includes WooCommerce)
+- `cd wordpress-woocommerce-dev && ./dev.sh` - Legacy WooCommerce-only setup
+- `cd wordpress-woocommerce-dev && ./setup.sh` - Set up WordPress + WooCommerce + Limina plugin
+- `cd wordpress-woocommerce-dev && ./rebuild.sh` - Rebuild Docker container after code changes
+- `./cli.sh status` - Check all container status
+- `./dev.sh logs platform` - View platform container logs
 
 ## Production Architecture Overview
 
