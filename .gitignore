@@ -93,3 +93,7 @@ wordpress-woocommerce-dev/wp-content/plugins/*
 # Ignore all standard themes
 wordpress-woocommerce-dev/wp-content/themes/*
 
+
+# Exclude WooCommerce
+limina-platform-new/wordpress-woocommerce-dev/wp-content/plugins/woocommerce/
+limina-platform-new/wordpress-woocommerce-dev/wp-content/uploads/
