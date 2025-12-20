@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { discountCodeService } from '@/lib/discounts';
 import { emailService } from '@/lib/email';
-import { createClient } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 interface BatchResult {
   buyOrderId: string;
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       sendEmails = true
     } = body;
 
-    const supabase = createClient();
+    const supabase = supabaseAdmin;
 
     // Get buy orders either from IDs or by filtering
     let buyOrders: any[] = [];

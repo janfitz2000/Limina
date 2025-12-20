@@ -3,9 +3,8 @@
  * Handles creation and management of platform-specific discount codes
  */
 
-import { createClient } from '@/lib/supabase';
-import { ShopifyIntegration } from '@/lib/integrations/shopify';
-import { WooCommerceIntegration } from '@/lib/integrations/woocommerce';
+import { supabaseAdmin } from '@/lib/supabase';
+import { ShopifyIntegration, WooCommerceIntegration } from '@/lib/integrations';
 
 export interface DiscountCodeRequest {
   buyOrderId: string;
@@ -36,7 +35,7 @@ export class DiscountCodeService {
   private supabase;
 
   constructor() {
-    this.supabase = createClient();
+    this.supabase = supabaseAdmin;
   }
 
   /**

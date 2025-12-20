@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { IntegrationManager } from '@/lib/integrations'
 import { discountCodeService } from '@/lib/discounts'
-import { createClient } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 const SHOPIFY_WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET
 
@@ -86,7 +86,7 @@ async function handleDiscountCodeTracking(orderPayload: any) {
       return
     }
 
-    const supabase = createClient()
+    const supabase = supabaseAdmin
 
     for (const discountCode of discountCodes) {
       const code = discountCode.code

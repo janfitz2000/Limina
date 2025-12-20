@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
     console.log('[Buy Orders API] POST request received');
-    
-    // Use service role for admin operations
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+
+    const supabase = supabaseAdmin
 
     const requestBody = await req.json();
     console.log('[Buy Orders API] Request body:', requestBody);
@@ -231,12 +227,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    let query = supabase
+    let query = supabaseAdmin
       .from('buy_orders')
       .select(`
         *,

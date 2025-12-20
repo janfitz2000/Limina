@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase-fixed'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function AuthPage() {
+function AuthContent() {
   const [isSignIn, setIsSignIn] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,13 +19,11 @@ export default function AuthPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check for error messages from redirects
     const errorParam = searchParams.get('error')
     if (errorParam === 'merchant_required') {
       setError('Access denied. This application is for merchants only.')
     }
 
-    // Check if user is already signed in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -70,7 +68,6 @@ export default function AuthPage() {
     setError('')
 
     try {
-      // Call our registration API
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -94,7 +91,6 @@ export default function AuthPage() {
         return
       }
 
-      // Sign in the user after successful registration
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -125,8 +121,8 @@ export default function AuthPage() {
             {isSignIn ? 'Welcome Back' : 'Join Limina'}
           </h1>
           <p className="text-gray-600">
-            {isSignIn 
-              ? 'Sign in to your merchant account' 
+            {isSignIn
+              ? 'Sign in to your merchant account'
               : 'Create your merchant account to start connecting stores'
             }
           </p>
@@ -257,8 +253,8 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading 
-              ? (isSignIn ? 'Signing In...' : 'Creating Account...') 
+            {loading
+              ? (isSignIn ? 'Signing In...' : 'Creating Account...')
               : (isSignIn ? 'Sign In' : 'Create Account')
             }
           </button>
@@ -269,8 +265,8 @@ export default function AuthPage() {
             onClick={() => setIsSignIn(!isSignIn)}
             className="text-blue-600 hover:text-blue-700 text-sm"
           >
-            {isSignIn 
-              ? "Don't have an account? Sign up" 
+            {isSignIn
+              ? "Don't have an account? Sign up"
               : 'Already have an account? Sign in'
             }
           </button>
@@ -281,15 +277,41 @@ export default function AuthPage() {
             <p className="text-sm text-blue-800">
               <strong>After creating your account:</strong>
               <br />
-              • Connect your Shopify or WooCommerce stores
+              - Connect your Shopify or WooCommerce stores
               <br />
-              • Set up payment processing with Stripe
+              - Set up payment processing with Stripe
               <br />
-              • Start accepting conditional buy orders
+              - Start accepting conditional buy orders
             </p>
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+function AuthFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-8"></div>
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthFallback />}>
+      <AuthContent />
+    </Suspense>
   )
 }

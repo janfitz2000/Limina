@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { discountCodeService } from '@/lib/discounts';
 import { emailService } from '@/lib/email';
-import { createClient } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
+    const supabase = supabaseAdmin;
 
     // Get buy order details with related data
     const { data: buyOrder, error: orderError } = await supabase

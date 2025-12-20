@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { discountCodeService } from '@/lib/discounts'
@@ -64,11 +64,7 @@ export async function POST(req: NextRequest) {
 
     const data = JSON.parse(body);
     
-    // Use service role for admin operations
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = supabaseAdmin
 
     switch (topic) {
       case 'product.updated':

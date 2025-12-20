@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
     console.log('[WooCommerce Buy Orders API] POST request received');
-    
-    // Use service role for admin operations
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+
+    const supabase = supabaseAdmin
 
     const requestBody = await req.json();
     console.log('[WooCommerce Buy Orders API] Request body:', requestBody);
@@ -36,38 +32,39 @@ export async function POST(req: NextRequest) {
 
     // Find or create the product in our database
     console.log('Looking for WooCommerce product with ID:', woocommerce_product_id);
-    
-    const { data: product, error: productError } = await supabase
+
+    let product;
+    const { data: existingProduct, error: productError } = await supabase
       .from('products')
       .select('*')
       .eq('woocommerce_product_id', woocommerce_product_id)
       .single()
 
-    if (productError || !product) {
+    if (productError || !existingProduct) {
       console.log('WooCommerce product not found, attempting to create temporary product:', productError);
-      
+
       // Use consistent merchant ID for WooCommerce integrations
-      const WOOCOMMERCE_MERCHANT_ID = '123e4567-e89b-12d3-a456-426614174002' // HomeGoods Plus from seed data
+      const WOOCOMMERCE_MERCHANT_ID = '123e4567-e89b-12d3-a456-426614174002'
       const { data: merchant, error: merchantError } = await supabase
         .from('merchants')
         .select('*')
         .eq('id', WOOCOMMERCE_MERCHANT_ID)
         .single()
-      
+
       if (merchantError || !merchant) {
         return NextResponse.json(
           { error: 'No WooCommerce merchant found in system' },
           { status: 404 }
         )
       }
-      
+
       // Create a temporary product record for this buy order
       const { data: newProduct, error: createError } = await supabase
         .from('products')
         .insert({
           merchant_id: merchant.id,
           woocommerce_product_id: woocommerce_product_id,
-          title: `WooCommerce Product ${woocommerce_product_id}`, // Will be updated when synced
+          title: `WooCommerce Product ${woocommerce_product_id}`,
           price: current_price,
           current_price: current_price,
           currency: currency || 'USD',
@@ -75,7 +72,7 @@ export async function POST(req: NextRequest) {
         })
         .select()
         .single()
-      
+
       if (createError) {
         console.error('Failed to create temporary WooCommerce product:', createError);
         return NextResponse.json(
@@ -83,9 +80,11 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         )
       }
-      
+
       console.log('Created temporary WooCommerce product:', newProduct);
       product = newProduct;
+    } else {
+      product = existingProduct;
     }
 
     // Validate that target price is below current price
@@ -211,12 +210,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    let query = supabase
+    let query = supabaseAdmin
       .from('buy_orders')
       .select(`
         *,

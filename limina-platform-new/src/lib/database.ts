@@ -1,13 +1,22 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Use service role for backend operations to bypass RLS
-const supabase = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+let supabaseClient: SupabaseClient | null = null
+
+function getSupabase(): SupabaseClient {
+  if (!supabaseClient) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) {
+      throw new Error('Supabase environment variables not configured')
+    }
+    supabaseClient = createSupabaseClient(url, key)
+  }
+  return supabaseClient
+}
 
 // Export the client function for reuse
-export const createClient = () => supabase
+export const createClient = () => getSupabase()
+
 
 // Basic types for our data
 export type Merchant = {
@@ -66,7 +75,7 @@ export type BuyOrder = {
 // Merchant Functions
 export async function getMerchant(id: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('merchants')
       .select('*')
       .eq('id', id)
@@ -82,7 +91,7 @@ export async function getMerchant(id: string) {
 // Customer Functions
 export async function getCustomer(email: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('customers')
       .select('*')
       .eq('email', email)
@@ -105,7 +114,7 @@ export async function getOrCreateCustomer(email: string, name?: string) {
     }
     
     // Create new customer if doesn't exist
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('customers')
       .insert({ email, name })
       .select()
@@ -121,7 +130,7 @@ export async function getOrCreateCustomer(email: string, name?: string) {
 // Product Functions
 export async function getProducts(merchantId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('products')
       .select('*')
       .eq('merchant_id', merchantId)
@@ -145,7 +154,7 @@ export async function createProduct(product: {
   shopify_product_id?: string | null
 }) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('products')
       .insert(product)
       .select()
@@ -161,7 +170,7 @@ export async function createProduct(product: {
 export async function updateProductPrice(productId: string, newPrice: number) {
   try {
     // Insert price history
-    await supabase
+    await getSupabase()
       .from('price_history')
       .insert({
         product_id: productId,
@@ -169,7 +178,7 @@ export async function updateProductPrice(productId: string, newPrice: number) {
       })
 
     // Update product current_price
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('products')
       .update({ current_price: newPrice })
       .eq('id', productId)
@@ -186,7 +195,7 @@ export async function updateProductPrice(productId: string, newPrice: number) {
 // Buy Order Functions
 export async function getBuyOrders(merchantId?: string, customerId?: string) {
   try {
-    let query = supabase
+    let query = getSupabase()
       .from('buy_orders')
       .select(`
         *,
@@ -260,7 +269,7 @@ export async function createBuyOrder(orderData: {
       expires_at: expiresAt.toISOString()
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('buy_orders')
       .insert(buyOrder)
       .select(`
@@ -294,7 +303,7 @@ export async function updateBuyOrderStatus(
       updateData.fulfilled_at = new Date().toISOString()
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('buy_orders')
       .update(updateData)
       .eq('id', id)
@@ -311,7 +320,7 @@ export async function updateBuyOrderStatus(
 // Analytics Functions
 export async function getMerchantStats(merchantId: string) {
   try {
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await getSupabase()
       .from('buy_orders')
       .select('status, target_price, current_price')
       .eq('merchant_id', merchantId)
@@ -352,7 +361,7 @@ export async function getMerchantStats(merchantId: string) {
 
 export async function getCustomerStats(customerId: string) {
   try {
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await getSupabase()
       .from('buy_orders')
       .select('status, target_price, current_price')
       .eq('customer_id', customerId)
@@ -377,7 +386,7 @@ export async function getCustomerStats(customerId: string) {
 
 // Real-time subscriptions
 export function subscribeToBuyOrders(merchantId: string, callback: (payload: Record<string, unknown>) => void) {
-  return supabase
+  return getSupabase()
     .channel('buy_orders_changes')
     .on(
       'postgres_changes',
@@ -393,7 +402,7 @@ export function subscribeToBuyOrders(merchantId: string, callback: (payload: Rec
 }
 
 export function subscribeToCustomerOrders(customerId: string, callback: (payload: Record<string, unknown>) => void) {
-  return supabase
+  return getSupabase()
     .channel('customer_orders_changes')
     .on(
       'postgres_changes',
@@ -441,7 +450,7 @@ export async function createMerchantDiscount(discount: {
       expiresAt = expiry.toISOString()
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('merchant_discounts')
       .insert({
         merchant_id: discount.merchantId,
@@ -464,7 +473,7 @@ export async function createMerchantDiscount(discount: {
 
 export async function getMerchantDiscounts(merchantId: string, productId?: string) {
   try {
-    let query = supabase
+    let query = getSupabase()
       .from('merchant_discounts')
       .select(`
         *,
@@ -492,7 +501,7 @@ export async function getMerchantDiscounts(merchantId: string, productId?: strin
 
 export async function activateDiscount(discountId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .rpc('check_discount_fulfillment', { discount_id: discountId })
 
     return { data, error }
@@ -504,7 +513,7 @@ export async function activateDiscount(discountId: string) {
 
 export async function cancelDiscount(discountId: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('merchant_discounts')
       .update({ 
         status: 'cancelled',
