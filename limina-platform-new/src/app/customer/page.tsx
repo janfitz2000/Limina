@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Logo } from '@/components/Logo'
-import { ShoppingCart, TrendingDown, Clock, CheckCircle2, XCircle, Activity, DollarSign } from 'lucide-react'
+import { TrendingDown, Clock, CheckCircle2, XCircle, Activity, DollarSign, LogOut } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
 
 interface Product {
   id: string
@@ -25,27 +27,52 @@ interface BuyOrder {
   products?: Product
 }
 
+interface Customer {
+  id: string
+  email: string
+  name: string | null
+}
+
 export default function CustomerDashboard() {
+  const router = useRouter()
+  const { user, loading: authLoading, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([])
-  
-  // Using Mike Chen's customer ID from our seed data (he has multiple orders)
-  const CUSTOMER_ID = '223e4567-e89b-12d3-a456-426614174002'
+  const [customer, setCustomer] = useState<Customer | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
+      if (authLoading) return
+
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
-        
-        // Fetch buy orders for this customer
-        const response = await fetch(`/api/buy-orders?customerId=${CUSTOMER_ID}`)
-        const data = await response.json()
-        
-        if (data.buy_orders) {
-          setBuyOrders(data.buy_orders)
+
+        // First, look up the customer by email
+        const customerResponse = await fetch(`/api/customers?email=${encodeURIComponent(user.email)}`)
+        const customerData = await customerResponse.json()
+
+        if (customerData.customer) {
+          setCustomer(customerData.customer)
+
+          // Fetch buy orders for this customer
+          const response = await fetch(`/api/buy-orders?customerId=${customerData.customer.id}`)
+          const data = await response.json()
+
+          if (data.buy_orders) {
+            setBuyOrders(data.buy_orders)
+          }
+        } else {
+          // No customer record found for this email - they haven't made any orders yet
+          setCustomer(null)
+          setBuyOrders([])
         }
-        
+
         setLoading(false)
       } catch (err) {
         console.error('Error fetching data:', err)
@@ -55,7 +82,12 @@ export default function CustomerDashboard() {
     }
 
     fetchData()
-  }, [])
+  }, [user, authLoading])
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -76,7 +108,7 @@ export default function CustomerDashboard() {
   const fulfilledOrders = buyOrders.filter(order => order.status === 'fulfilled')
   const totalSavings = fulfilledOrders.reduce((sum, order) => sum + calculateSavings(order.target_price, order.current_price), 0)
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -87,13 +119,39 @@ export default function CustomerDashboard() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <Logo />
+          <h1 className="text-2xl font-bold text-gray-900 mt-4 mb-2">Customer Dashboard</h1>
+          <p className="text-gray-600 mb-6">
+            Sign in to view and track your buy orders
+          </p>
+          <Link
+            href="/auth?redirectTo=/customer"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </Link>
+          <p className="mt-4 text-sm text-gray-500">
+            New to Limina?{' '}
+            <Link href="/" className="text-blue-600 hover:text-blue-700">
+              Learn more
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">❌ Error</div>
+          <div className="text-red-500 text-xl mb-4">Error</div>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -115,10 +173,16 @@ export default function CustomerDashboard() {
               <h1 className="text-2xl font-bold text-blue-600">Limina</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Customer Dashboard</span>
-              <Link href="/" className="text-gray-600 hover:text-blue-600">
-                ← Back to Site
-              </Link>
+              <span className="text-sm text-gray-600">
+                {customer?.name || user.email}
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="w-4 h-4 mr-1" />
+                Sign Out
+              </button>
             </div>
           </div>
         </div>
@@ -371,22 +435,21 @@ export default function CustomerDashboard() {
         {/* Quick Links */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 flex items-center">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Merchant View
-            </Link>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
               <TrendingDown className="w-4 h-4 mr-2" />
               Create Buy Order
             </Link>
-            <a href="http://127.0.0.1:54323" target="_blank" className="text-blue-600 hover:text-blue-800 flex items-center">
-              <Activity className="w-4 h-4 mr-2" />
-              Database View
-            </a>
             <button className="text-blue-600 hover:text-blue-800 flex items-center" onClick={() => window.location.reload()}>
-              <Clock className="w-4 h-4 mr-2" />
+              <Activity className="w-4 h-4 mr-2" />
               Refresh Orders
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="text-gray-600 hover:text-red-600 flex items-center"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
             </button>
           </div>
         </div>

@@ -81,12 +81,12 @@ export default function LandingPage() {
               <a href="#demo" className="nav-link text-gray-700 font-medium hover:text-primary">Demo</a>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <a href="/dashboard" className="hidden lg:inline-flex items-center px-4 py-2 border border-primary/20 rounded-full text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
-                🏪 Merchant Demo
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <a href="/dashboard" className="inline-flex items-center px-3 py-2 sm:px-4 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
+                Merchant
               </a>
-              <a href="/customer" className="hidden lg:inline-flex items-center px-4 py-2 border border-primary/20 rounded-full text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
-                🛍️ Customer Demo
+              <a href="/customer" className="inline-flex items-center px-3 py-2 sm:px-4 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
+                Customer
               </a>
               <button className="hidden md:inline-flex items-center px-6 py-3 btn-primary rounded-full text-base font-medium shadow-lg pulse-glow">
                 Get Started
