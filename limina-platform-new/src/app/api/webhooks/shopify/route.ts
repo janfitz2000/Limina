@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { IntegrationManager } from '@/lib/integrations'
+import { discountCodeService } from '@/lib/discounts'
+import { createClient } from '@/lib/supabase'
 
 const SHOPIFY_WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET
 
@@ -46,6 +48,11 @@ export async function POST(request: NextRequest) {
       shop_domain: domain
     }
 
+    // Handle discount code tracking for orders
+    if (topic === 'orders/paid' || topic === 'orders/create') {
+      await handleDiscountCodeTracking(payload)
+    }
+
     // Process webhook using IntegrationManager
     const result = await IntegrationManager.handleWebhook('shopify', enrichedPayload)
 
@@ -64,6 +71,68 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Track discount code usage from Shopify orders
+ */
+async function handleDiscountCodeTracking(orderPayload: any) {
+  try {
+    // Check if order has discount codes applied
+    const discountCodes = orderPayload.discount_codes || []
+
+    if (discountCodes.length === 0) {
+      return
+    }
+
+    const supabase = createClient()
+
+    for (const discountCode of discountCodes) {
+      const code = discountCode.code
+
+      // Check if this is one of our LIMINA codes
+      if (!code.startsWith('LIMINA-')) {
+        continue
+      }
+
+      // Find the discount code in our database
+      const { data: codeRecord, error } = await supabase
+        .from('discount_codes')
+        .select('*')
+        .eq('code', code)
+        .eq('platform', 'shopify')
+        .single()
+
+      if (error || !codeRecord) {
+        console.log(`Discount code ${code} not found in database`)
+        continue
+      }
+
+      // Skip if already marked as used
+      if (codeRecord.status === 'used') {
+        continue
+      }
+
+      // Mark as used
+      await discountCodeService.markCodeAsUsed(code, 'shopify')
+
+      console.log(`Marked discount code ${code} as used for order ${orderPayload.id}`)
+
+      // Create notification for merchant
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: codeRecord.merchant_id,
+          user_type: 'merchant',
+          buy_order_id: codeRecord.buy_order_id,
+          title: 'Discount Code Redeemed! 💰',
+          message: `Customer used code ${code} - Order #${orderPayload.order_number}`,
+          type: 'order_fulfilled'
+        })
+    }
+  } catch (error) {
+    console.error('Error tracking discount code:', error)
   }
 }
 
