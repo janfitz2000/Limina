@@ -366,38 +366,76 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <Link
+              href="/demo"
+              className="group bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all md:col-span-3 mb-4"
+            >
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <Play className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">Customer Journey Demo</h3>
+                  <p className="text-gray-600">
+                    See the complete flow: widget on checkout, merchant dashboard view, and customer email notification.
+                  </p>
+                </div>
+                <span className="inline-flex items-center text-blue-600 font-semibold group-hover:gap-3 transition-all">
+                  Start Interactive Demo
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </span>
+              </div>
+            </Link>
+
             <Link
               href="/dashboard?demo=true"
-              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/20 transition-all"
+              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all"
             >
-              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Store className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Store className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Merchant Dashboard</h3>
-              <p className="text-blue-100 mb-4">
-                See how merchants view customer demand, analyze pricing data, and send discount codes.
+              <h3 className="text-xl font-bold text-white mb-2">Merchant Dashboard</h3>
+              <p className="text-blue-100 mb-4 text-sm">
+                View customer demand, analyze pricing, and send discount codes.
               </p>
-              <span className="inline-flex items-center text-white font-medium group-hover:gap-3 transition-all">
+              <span className="inline-flex items-center text-white font-medium text-sm group-hover:gap-2 transition-all">
                 Explore Dashboard
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </span>
+            </Link>
+
+            <Link
+              href="/dashboard/analytics?demo=true"
+              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Analytics</h3>
+              <p className="text-blue-100 mb-4 text-sm">
+                See demand trends, revenue metrics, and conversion analytics.
+              </p>
+              <span className="inline-flex items-center text-white font-medium text-sm group-hover:gap-2 transition-all">
+                View Analytics
+                <ArrowRight className="w-4 h-4 ml-1" />
               </span>
             </Link>
 
             <Link
               href="/customer?demo=true"
-              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/20 transition-all"
+              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all"
             >
-              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Users className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Customer View</h3>
-              <p className="text-blue-100 mb-4">
-                Experience how customers track their buy orders and see when their target prices are met.
+              <h3 className="text-xl font-bold text-white mb-2">Customer View</h3>
+              <p className="text-blue-100 mb-4 text-sm">
+                Track buy orders and see when target prices are met.
               </p>
-              <span className="inline-flex items-center text-white font-medium group-hover:gap-3 transition-all">
+              <span className="inline-flex items-center text-white font-medium text-sm group-hover:gap-2 transition-all">
                 View Customer Demo
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-1" />
               </span>
             </Link>
           </div>

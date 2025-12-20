@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
-import { TrendingDown, Clock, CheckCircle2, XCircle, Activity, DollarSign, LogOut } from 'lucide-react'
+import { TrendingDown, Clock, CheckCircle2, XCircle, Activity, DollarSign, LogOut, Eye } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
+import { DEMO_BUY_ORDERS, DEMO_CUSTOMERS } from '@/lib/demo-data'
 
 interface Product {
   id: string
@@ -33,8 +34,10 @@ interface Customer {
   name: string | null
 }
 
-export default function CustomerDashboard() {
+function CustomerDashboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isDemo = searchParams.get('demo') === 'true'
   const { user, loading: authLoading, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +45,18 @@ export default function CustomerDashboard() {
   const [customer, setCustomer] = useState<Customer | null>(null)
 
   useEffect(() => {
+    // Demo mode - use static demo data
+    if (isDemo) {
+      const demoCustomer = DEMO_CUSTOMERS[0]
+      setCustomer(demoCustomer)
+
+      // Filter orders for the demo customer
+      const customerOrders = DEMO_BUY_ORDERS.filter(o => o.customer_id === demoCustomer.id)
+      setBuyOrders(customerOrders)
+      setLoading(false)
+      return
+    }
+
     const fetchData = async () => {
       if (authLoading) return
 
@@ -82,7 +97,7 @@ export default function CustomerDashboard() {
     }
 
     fetchData()
-  }, [user, authLoading])
+  }, [user, authLoading, isDemo])
 
   const handleSignOut = async () => {
     await signOut()
@@ -108,7 +123,8 @@ export default function CustomerDashboard() {
   const fulfilledOrders = buyOrders.filter(order => order.status === 'fulfilled')
   const totalSavings = fulfilledOrders.reduce((sum, order) => sum + calculateSavings(order.target_price, order.current_price), 0)
 
-  if (authLoading || loading) {
+  // Demo mode bypasses auth
+  if (!isDemo && (authLoading || loading)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -119,7 +135,18 @@ export default function CustomerDashboard() {
     )
   }
 
-  if (!user) {
+  if (isDemo && loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading demo dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isDemo && !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
@@ -135,9 +162,9 @@ export default function CustomerDashboard() {
             Sign In
           </Link>
           <p className="mt-4 text-sm text-gray-500">
-            New to Limina?{' '}
-            <Link href="/" className="text-blue-600 hover:text-blue-700">
-              Learn more
+            Or{' '}
+            <Link href="/customer?demo=true" className="text-blue-600 hover:text-blue-700">
+              view demo
             </Link>
           </p>
         </div>
@@ -164,6 +191,24 @@ export default function CustomerDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      {/* Demo Banner */}
+      {isDemo && (
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Eye className="w-5 h-5" />
+              <span className="font-medium">Demo Mode - Viewing as sample customer Sarah Johnson</span>
+            </div>
+            <Link
+              href="/auth"
+              className="bg-white text-purple-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-purple-50 transition-colors"
+            >
+              Sign Up Free
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="border-b border-gray-200 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,15 +219,17 @@ export default function CustomerDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                {customer?.name || user.email}
+                {customer?.name || (isDemo ? 'Demo User' : user?.email)}
               </span>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
-              >
-                <LogOut className="w-4 h-4 mr-1" />
-                Sign Out
-              </button>
+              {!isDemo && (
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 mr-1" />
+                  Sign Out
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -455,5 +502,24 @@ export default function CustomerDashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+function CustomerDashboardFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+export default function CustomerDashboard() {
+  return (
+    <Suspense fallback={<CustomerDashboardFallback />}>
+      <CustomerDashboardContent />
+    </Suspense>
   )
 }

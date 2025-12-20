@@ -142,21 +142,22 @@ BEGIN
         ) s
     ),
     products AS (
-        SELECT jsonb_agg(
-            jsonb_build_object(
+        SELECT COALESCE(jsonb_agg(product_data), '[]'::jsonb) as top_prods
+        FROM (
+            SELECT jsonb_build_object(
                 'product_id', p.id,
                 'product_title', p.title,
                 'codes_generated', COUNT(dc.id),
                 'codes_used', COUNT(*) FILTER (WHERE dc.status = 'used')
-            )
+            ) as product_data
+            FROM discount_codes dc
+            JOIN products p ON p.id = dc.product_id
+            WHERE dc.merchant_id = p_merchant_id
+            AND dc.created_at >= NOW() - (p_days || ' days')::INTERVAL
+            GROUP BY p.id, p.title
             ORDER BY COUNT(dc.id) DESC
             LIMIT 10
-        ) as top_prods
-        FROM discount_codes dc
-        JOIN products p ON p.id = dc.product_id
-        WHERE dc.merchant_id = p_merchant_id
-        AND dc.created_at >= NOW() - (p_days || ' days')::INTERVAL
-        GROUP BY p.id, p.title
+        ) sub
     )
     SELECT
         s.total_generated,

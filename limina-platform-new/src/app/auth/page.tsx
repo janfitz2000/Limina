@@ -10,9 +10,6 @@ function AuthContent() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [companyName, setCompanyName] = useState('')
-  const [websiteUrl, setWebsiteUrl] = useState('')
-  const [phone, setPhone] = useState('')
-  const [country, setCountry] = useState('GB')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -78,9 +75,6 @@ function AuthContent() {
           password,
           name,
           companyName,
-          websiteUrl,
-          phone,
-          country,
         }),
       })
 
@@ -154,7 +148,7 @@ function AuthContent() {
 
               <div>
                 <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name
+                  Company/Store Name
                 </label>
                 <input
                   id="companyName"
@@ -162,57 +156,8 @@ function AuthContent() {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Your Company Ltd"
+                  placeholder="Your Company or Store Name"
                 />
-              </div>
-
-              <div>
-                <label htmlFor="websiteUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                  Website URL
-                </label>
-                <input
-                  id="websiteUrl"
-                  type="url"
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://yourstore.com"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="+44 123 456 7890"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-                    Country
-                  </label>
-                  <select
-                    id="country"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="GB">United Kingdom</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                  </select>
-                </div>
               </div>
             </>
           )}
@@ -275,13 +220,7 @@ function AuthContent() {
         {!isSignIn && (
           <div className="mt-6 p-4 bg-blue-50 rounded-md">
             <p className="text-sm text-blue-800">
-              <strong>After creating your account:</strong>
-              <br />
-              - Connect your Shopify or WooCommerce stores
-              <br />
-              - Set up payment processing with Stripe
-              <br />
-              - Start accepting conditional buy orders
+              <strong>Quick setup:</strong> Create your account, then add products and start collecting price commitments from customers.
             </p>
           </div>
         )}

@@ -205,6 +205,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing triggers if they exist to avoid conflicts
+DROP TRIGGER IF EXISTS update_merchants_updated_at ON merchants;
+DROP TRIGGER IF EXISTS update_stores_updated_at ON stores;
+
 CREATE TRIGGER update_merchants_updated_at
     BEFORE UPDATE ON merchants
     FOR EACH ROW
