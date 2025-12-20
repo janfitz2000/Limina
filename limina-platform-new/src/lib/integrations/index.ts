@@ -325,6 +325,77 @@ export class ShopifyIntegration extends BaseIntegration {
       .eq('merchant_id', this.merchantId)
       .eq('platform', 'shopify')
   }
+
+  /**
+   * Create a Shopify Price Rule for discount codes
+   */
+  async createPriceRule(params: {
+    title: string
+    value_type: 'percentage' | 'fixed_amount'
+    value: string
+    customer_selection: 'all' | 'prerequisite'
+    target_type: 'line_item' | 'shipping_line'
+    target_selection: 'all' | 'entitled'
+    entitled_product_ids?: string[]
+    allocation_method: 'each' | 'across'
+    starts_at: string
+    ends_at?: string
+    usage_limit?: number
+  }): Promise<any> {
+    try {
+      const priceRuleData = {
+        price_rule: params
+      }
+
+      const response = await fetch(`${this.apiUrl}/price_rules.json`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(priceRuleData)
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Shopify API error: ${error}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating price rule:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create a Shopify Discount Code for a price rule
+   */
+  async createDiscountCode(priceRuleId: string, code: string): Promise<any> {
+    try {
+      const discountCodeData = {
+        discount_code: {
+          code: code
+        }
+      }
+
+      const response = await fetch(
+        `${this.apiUrl}/price_rules/${priceRuleId}/discount_codes.json`,
+        {
+          method: 'POST',
+          headers: this.headers,
+          body: JSON.stringify(discountCodeData)
+        }
+      )
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Shopify API error: ${error}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating discount code:', error)
+      throw error
+    }
+  }
 }
 
 // WooCommerce Integration
@@ -449,6 +520,42 @@ export class WooCommerceIntegration extends BaseIntegration {
       .update({ last_sync: new Date().toISOString() })
       .eq('merchant_id', this.merchantId)
       .eq('platform', 'woocommerce')
+  }
+
+  /**
+   * Create a WooCommerce Coupon
+   */
+  async createCoupon(params: {
+    code: string
+    discount_type: 'percent' | 'fixed_cart' | 'fixed_product'
+    amount: string
+    individual_use?: boolean
+    product_ids?: number[]
+    usage_limit?: number
+    usage_limit_per_user?: number
+    date_expires?: string
+    description?: string
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${this.apiUrl}/coupons`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${this.auth}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`WooCommerce API error: ${error}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating coupon:', error)
+      throw error
+    }
   }
 }
 
