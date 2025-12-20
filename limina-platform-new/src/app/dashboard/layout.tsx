@@ -1,46 +1,57 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
 import { useAuth, signOut } from '@/lib/auth'
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  CreditCard, 
-  Settings, 
-  BarChart3, 
-  Store, 
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  CreditCard,
+  Settings,
+  BarChart3,
+  Store,
   Bell,
   User,
-  LogOut
+  LogOut,
+  Package
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { name: 'Products', href: '/dashboard/products', icon: Store },
+  { name: 'Products', href: '/dashboard/products', icon: Package },
   { name: 'Stores', href: '/dashboard/stores', icon: Store },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isDemo = searchParams.get('demo') === 'true'
   const { user, loading } = useAuth()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Skip auth check in demo mode
+    if (isDemo) return
+
     if (!loading && (!user || user.role !== 'merchant')) {
       router.push('/auth')
     }
-  }, [user, loading, router])
+  }, [user, loading, router, isDemo])
 
   const handleSignOut = async () => {
     if (!confirm('Are you sure you want to sign out?')) {
@@ -59,7 +70,8 @@ export default function DashboardLayout({
     }
   }
 
-  if (loading) {
+  // In demo mode, skip auth loading state
+  if (!isDemo && loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -67,9 +79,13 @@ export default function DashboardLayout({
     )
   }
 
-  if (!user || user.role !== 'merchant') {
+  // In demo mode, allow access without auth
+  if (!isDemo && (!user || user.role !== 'merchant')) {
     return null
   }
+
+  // Demo user for display purposes
+  const displayUser = isDemo ? { name: 'Demo Merchant', email: 'demo@limina.io' } : user
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,10 +100,11 @@ export default function DashboardLayout({
           <div className="space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href
+              const href = isDemo ? `${item.href}?demo=true` : item.href
               return (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={href}
                   className={`${
                     isActive
                       ? 'bg-blue-50 border-blue-500 text-blue-700'
@@ -114,20 +131,29 @@ export default function DashboardLayout({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {user.name}
+                {displayUser?.name || 'Guest'}
               </p>
               <p className="text-xs text-gray-500 truncate">
-                Merchant Account
+                {isDemo ? 'Demo Mode' : 'Merchant Account'}
               </p>
             </div>
           </div>
-          <button 
-            onClick={handleSignOut}
-            className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-          >
-            <LogOut className="mr-3 h-4 w-4" />
-            Sign out
-          </button>
+          {isDemo ? (
+            <Link
+              href="/auth"
+              className="w-full flex items-center justify-center px-3 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors font-medium"
+            >
+              Sign Up Free
+            </Link>
+          ) : (
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+            >
+              <LogOut className="mr-3 h-4 w-4" />
+              Sign out
+            </button>
+          )}
         </div>
       </div>
 
@@ -164,5 +190,25 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+  )
+}
+
+function DashboardFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  )
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <Suspense fallback={<DashboardFallback />}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </Suspense>
   )
 }
