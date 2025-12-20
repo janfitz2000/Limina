@@ -1,10 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase-fixed'
-import { ShoppingCart, TrendingUp, DollarSign, Activity, AlertTriangle, Store, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { ShoppingCart, TrendingUp, DollarSign, Activity, AlertTriangle, Store, ArrowUpRight, ArrowDownRight, Eye } from 'lucide-react'
+import { DEMO_BUY_ORDERS, DEMO_STATS, DEMO_MERCHANT, DEMO_PRODUCTS } from '@/lib/demo-data'
+import { DemoTour, DASHBOARD_TOUR_STEPS } from '@/components/DemoTour'
 
 interface Product {
   id: string
@@ -38,7 +41,9 @@ interface Stats {
   conversionRate: number
 }
 
-export default function DashboardOverview() {
+function DashboardOverviewContent() {
+  const searchParams = useSearchParams()
+  const isDemo = searchParams.get('demo') === 'true'
   const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -47,12 +52,43 @@ export default function DashboardOverview() {
   const [stores, setStores] = useState<any[]>([])
 
   useEffect(() => {
+    // Demo mode - use static demo data
+    if (isDemo) {
+      const demoOrders = DEMO_BUY_ORDERS.map(order => ({
+        id: order.id,
+        customer_name: order.customers.name,
+        customer_email: order.customers.email,
+        target_price: order.target_price,
+        current_price: order.current_price,
+        status: order.status,
+        created_at: order.created_at,
+        expires_at: order.expires_at,
+        products: order.products,
+      }))
+
+      setBuyOrders(demoOrders)
+      setStats({
+        total: DEMO_STATS.totalOrders,
+        monitoring: DEMO_STATS.activeOrders,
+        fulfilled: DEMO_STATS.fulfilledOrders,
+        pending: 0,
+        cancelled: 0,
+        totalRevenue: DEMO_STATS.totalRevenue,
+        avgDiscount: 0,
+        conversionRate: DEMO_STATS.conversionRate,
+      })
+      setStores([{ id: 'demo-store', name: 'Demo Shopify Store', platform: 'shopify', status: 'connected' }])
+      setLoading(false)
+      return
+    }
+
+    // Real mode - requires authentication
     if (authLoading || !user || !user.merchant_id) return
 
     const fetchData = async () => {
       try {
         setLoading(true)
-        
+
         // Fetch buy orders for this merchant
         const { data: ordersData, error: ordersError } = await supabase
           .from('buy_orders')
@@ -77,7 +113,7 @@ export default function DashboardOverview() {
           .limit(10)
 
         if (ordersError) throw ordersError
-        
+
         // Fetch stores for this merchant
         const { data: storesData, error: storesError } = await supabase
           .from('stores')
@@ -106,7 +142,7 @@ export default function DashboardOverview() {
           avgDiscount: 0,
           conversionRate
         })
-        
+
         setLoading(false)
       } catch (err) {
         console.error('Error fetching data:', err)
@@ -116,7 +152,7 @@ export default function DashboardOverview() {
     }
 
     fetchData()
-  }, [user, authLoading])
+  }, [user, authLoading, isDemo])
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -132,7 +168,8 @@ export default function DashboardOverview() {
   const formatCurrency = (amount: number) => `£${amount.toFixed(2)}`
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString()
 
-  if (authLoading || loading) {
+  // Demo mode bypasses auth loading
+  if (!isDemo && (authLoading || loading)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -143,13 +180,25 @@ export default function DashboardOverview() {
     )
   }
 
+  // Show loading for demo mode initial load
+  if (isDemo && loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading demo dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">❌ Error</div>
+          <div className="text-red-500 text-xl mb-4">Error</div>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -162,6 +211,31 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-6">
+      {/* Demo Tour */}
+      {isDemo && (
+        <DemoTour
+          steps={DASHBOARD_TOUR_STEPS}
+          storageKey="dashboard-demo-tour"
+        />
+      )}
+
+      {/* Demo Mode Banner */}
+      {isDemo && (
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 rounded-lg shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Eye className="w-5 h-5" />
+              <span className="font-medium">Demo Mode - Viewing sample merchant dashboard</span>
+            </div>
+            <Link
+              href="/auth"
+              className="bg-white text-purple-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-purple-50 transition-colors"
+            >
+              Sign Up Free
+            </Link>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between">
@@ -375,5 +449,24 @@ export default function DashboardOverview() {
       </div>
 
     </div>
+  )
+}
+
+function DashboardFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+export default function DashboardOverview() {
+  return (
+    <Suspense fallback={<DashboardFallback />}>
+      <DashboardOverviewContent />
+    </Suspense>
   )
 }

@@ -1,581 +1,496 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Logo } from '@/components/Logo'
-import { ShoppingCart, Store, Building, Target, ArrowRight, CheckCircle, Rocket, Info, ArrowDown, Heart, BarChart3, Users, Eye, Activity } from 'lucide-react'
+import {
+  ArrowRight,
+  CheckCircle,
+  Play,
+  ShoppingCart,
+  TrendingUp,
+  Target,
+  Users,
+  Zap,
+  BarChart3,
+  Tag,
+  ChevronDown,
+  Store,
+  Building
+} from 'lucide-react'
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('retail')
-  const [heroPrice, setHeroPrice] = useState(849)
-  
-  // Animation effects
+  const [activeFeature, setActiveFeature] = useState(0)
+  const [isVisible, setIsVisible] = useState(false)
+  const heroRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    // Ensure we're in the browser environment
-    if (typeof window === 'undefined') return
+    setIsVisible(true)
 
-    // Scroll animation observer
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    }
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % 3)
+    }, 4000)
 
-    let elements: Element[] = []
-    let observer: IntersectionObserver | null = null
-
-    // Small delay to ensure DOM elements are mounted
-    const initObserver = () => {
-      observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('animate-in')
-            observer?.unobserve(entry.target)
-          }
-        })
-      }, observerOptions)
-
-      elements = Array.from(document.querySelectorAll('.scroll-animate'))
-      elements.forEach(el => {
-        observer?.observe(el)
-      })
-    }
-
-    // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(initObserver, 100)
-
-    // Cleanup function
-    return () => {
-      clearTimeout(timeoutId)
-      if (observer) {
-        elements.forEach(el => {
-          observer?.unobserve(el)
-        })
-        observer.disconnect()
-      }
-    }
+    return () => clearInterval(interval)
   }, [])
 
-  const handleHeroOrderSubmit = () => {
-    // Demo functionality
-    alert(`Demo: Buy Order created for £${heroPrice}! \n\nThis would normally:\n• Monitor price changes\n• Notify when conditions are met\n• Complete purchase automatically`)
+  const features = [
+    {
+      icon: <Target className="w-6 h-6" />,
+      title: 'Capture Price Intent',
+      description: 'Customers commit to buy at their ideal price. No more lost sales from price-sensitive shoppers.',
+      stat: '48%',
+      statLabel: 'abandon due to price'
+    },
+    {
+      icon: <BarChart3 className="w-6 h-6" />,
+      title: 'See Real Demand',
+      description: 'View aggregated demand at every price point. Make data-driven pricing decisions.',
+      stat: '3.2x',
+      statLabel: 'more pricing insights'
+    },
+    {
+      icon: <Tag className="w-6 h-6" />,
+      title: 'Convert with Discounts',
+      description: 'Send targeted discount codes to waiting customers. They buy instantly.',
+      stat: '89%',
+      statLabel: 'conversion rate'
+    }
+  ]
+
+  const scrollToDemo = () => {
+    document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      {/* Navigation */}
-      <nav className="fixed w-full bg-white/90 backdrop-blur-md z-50 shadow-sm transition-all duration-300">
+    <div className="min-h-screen bg-white">
+      <nav className="fixed w-full bg-white/80 backdrop-blur-xl z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
+          <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
-              <div className="flex items-center group cursor-pointer">
-                <Logo />
-                <span className="text-2xl font-bold ml-3 logo-text group-hover:text-primary transition-colors">LIMINA</span>
-              </div>
+              <Logo />
+              <span className="text-xl font-bold ml-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">LIMINA</span>
             </div>
-            
+
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#what-we-do" className="nav-link text-gray-700 font-medium hover:text-primary">What We Do</a>
-              <a href="#how-it-works" className="nav-link text-gray-700 font-medium hover:text-primary">How It Works</a>
-              <a href="#solutions" className="nav-link text-gray-700 font-medium hover:text-primary">Solutions</a>
-              <a href="#demo" className="nav-link text-gray-700 font-medium hover:text-primary">Demo</a>
+              <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Features</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">How It Works</a>
+              <a href="#demo-section" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Demo</a>
             </div>
-            
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <a href="/dashboard" className="inline-flex items-center px-3 py-2 sm:px-4 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
-                Merchant
-              </a>
-              <a href="/customer" className="inline-flex items-center px-3 py-2 sm:px-4 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary hover:bg-primary/10 transition-colors">
-                Customer
-              </a>
-              <button className="hidden md:inline-flex items-center px-6 py-3 btn-primary rounded-full text-base font-medium shadow-lg pulse-glow">
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard?demo=true"
+                className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Try Demo
+              </Link>
+              <Link
+                href="/auth"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              >
                 Get Started
                 <ArrowRight className="ml-2 w-4 h-4" />
-              </button>
-              
-              <button 
+              </Link>
+
+              <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden ml-4 p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
               >
-                <span className="sr-only">Open main menu</span>
-                <div className={`hamburger-icon space-y-1.5 ${mobileMenuOpen ? 'hamburger-open' : ''}`}>
-                  <span className="hamburger-line line1 block w-6 h-0.5 bg-gray-700"></span>
-                  <span className="hamburger-line line2 block w-6 h-0.5 bg-gray-700"></span>
-                  <span className="hamburger-line line3 block w-6 h-0.5 bg-gray-700"></span>
+                <div className="w-5 h-5 flex flex-col justify-center gap-1">
+                  <span className={`block h-0.5 w-5 bg-current transition-transform ${mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+                  <span className={`block h-0.5 w-5 bg-current transition-opacity ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+                  <span className={`block h-0.5 w-5 bg-current transition-transform ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
                 </div>
               </button>
             </div>
           </div>
         </div>
-        
-        {/* Mobile Menu */}
+
         {mobileMenuOpen && (
-          <div className="md:hidden mobile-menu">
-            <div className="px-4 py-6 space-y-4">
-              <a href="#what-we-do" className="nav-link block text-gray-700 font-medium hover:text-primary transition-colors">What We Do</a>
-              <a href="#how-it-works" className="nav-link block text-gray-700 font-medium hover:text-primary transition-colors">How It Works</a>
-              <a href="#solutions" className="nav-link block text-gray-700 font-medium hover:text-primary transition-colors">Solutions</a>
-              <a href="#demo" className="nav-link block text-gray-700 font-medium hover:text-primary transition-colors">Demo</a>
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <a href="/dashboard" className="nav-link block text-primary font-medium hover:text-primary-medium transition-colors">🏪 Merchant Demo</a>
-                <a href="/customer" className="nav-link block text-primary font-medium hover:text-primary-medium transition-colors mt-2">🛍️ Customer Demo</a>
+          <div className="md:hidden border-t border-gray-100 bg-white">
+            <div className="px-4 py-4 space-y-3">
+              <a href="#features" className="block text-gray-600 hover:text-gray-900 font-medium">Features</a>
+              <a href="#how-it-works" className="block text-gray-600 hover:text-gray-900 font-medium">How It Works</a>
+              <a href="#demo-section" className="block text-gray-600 hover:text-gray-900 font-medium">Demo</a>
+              <div className="pt-3 border-t border-gray-100">
+                <Link href="/dashboard?demo=true" className="block text-blue-600 font-medium mb-2">Try Demo</Link>
+                <Link href="/auth" className="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">Get Started</Link>
               </div>
-              <button className="block w-full text-center px-6 py-3 btn-primary rounded-full font-medium mt-4">
-                Get Started
-              </button>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="hero-gradient pt-32 pb-20 section-padding">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="hero-layout">
-            <div className="scroll-animate">
-              <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-md rounded-full mb-8">
-                <span className="text-accent font-medium">🚀 In Development</span>
-                <span className="ml-2 px-2 py-1 bg-accent text-primary text-xs rounded-full font-bold">EARLY ACCESS</span>
+      <section ref={heroRef} className="relative pt-32 pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50" />
+        <div className="absolute top-20 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-blue-100/50 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-indigo-100/50 to-transparent rounded-full blur-3xl" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full text-blue-700 text-sm font-medium mb-6">
+                <Zap className="w-4 h-4" />
+                Turn Cart Abandonment into Sales
               </div>
-              
-              <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-6 text-white">
-                Conditional Buy Orders
-                <span className="block text-accent">That Convert Intent into Sales</span>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                Let Customers
+                <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Name Their Price
+                </span>
               </h1>
-              
-              <p className="text-xl text-gray-200 mb-8 max-w-2xl">
-                Enable customers and businesses to commit to purchase when their conditions are met. 
-                <span className="font-semibold text-white">Capture demand you&apos;re currently losing to price sensitivity, timing, and complex B2B procurement.</span>
+
+              <p className="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed max-w-xl">
+                Customers set target prices. You see real demand. Send discount codes when you're ready to convert. Simple.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <button 
-                  onClick={() => document.getElementById('what-we-do')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="btn-glimmer px-8 py-4 rounded-full text-lg font-semibold inline-flex items-center justify-center text-primary shadow-lg"
+                <Link
+                  href="/dashboard?demo=true"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-200 group"
                 >
-                  Discover LIMINA
-                  <ArrowDown className="ml-2 w-5 h-5" />
-                </button>
-                <button className="btn-secondary px-8 py-4 rounded-full text-lg font-medium inline-flex items-center justify-center">
-                  Get Early Access
-                  <Rocket className="ml-2 w-5 h-5" />
+                  <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                  Try Merchant Demo
+                </Link>
+                <button
+                  onClick={scrollToDemo}
+                  className="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all"
+                >
+                  See How It Works
+                  <ChevronDown className="w-5 h-5 ml-2" />
                 </button>
               </div>
-              
-              <div className="grid grid-cols-3 gap-8 pt-8 border-t border-white/20">
-                <div className="text-center stagger-item scroll-animate">
-                  <div className="text-3xl font-bold text-accent mb-1">70%</div>
-                  <div className="text-sm text-gray-300">Cart Abandonment Rate</div>
+
+              <div className="flex items-center gap-8">
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">70%</div>
+                  <div className="text-sm text-gray-500">of carts abandoned</div>
                 </div>
-                <div className="text-center stagger-item scroll-animate">
-                  <div className="text-3xl font-bold text-accent mb-1">48%</div>
-                  <div className="text-sm text-gray-300">Abandon Due to Price</div>
+                <div className="w-px h-12 bg-gray-200" />
+                <div>
+                  <div className="text-3xl font-bold text-blue-600">48%</div>
+                  <div className="text-sm text-gray-500">due to price</div>
                 </div>
-                <div className="text-center stagger-item scroll-animate">
-                  <div className="text-3xl font-bold text-accent mb-1">£260B</div>
-                  <div className="text-sm text-gray-300">Recoverable Revenue</div>
+                <div className="w-px h-12 bg-gray-200" />
+                <div>
+                  <div className="text-3xl font-bold text-green-600">89%</div>
+                  <div className="text-sm text-gray-500">convert with discounts</div>
                 </div>
               </div>
             </div>
-            
-            {/* Hero Card */}
-            <div className="hero-card-container">
-              <div className="hero-card floating rounded-3xl p-8 w-full max-w-md scroll-animate">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center">
-                    <Image 
-                      className="h-16 w-16 rounded-2xl object-cover" 
-                      src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiMxOTE5MTkiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjMiIHk9IjMiIHJ4PSIxIi8+CjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjE0IiB5PSIzIiByeD0iMSIvPgo8cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSI3IiB4PSIxNCIgeT0iMTQiIHJ4PSIxIi8+CjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjciIHg9IjMiIHk9IjE0IiByeD0iMSIvPgo8L3N2Zz4KPC9zdmc+"
-                      alt="iPhone 16 Pro"
-                      width={64}
-                      height={64}
-                    />
-                    <div className="ml-4">
-                      <h3 className="font-semibold text-gray-800 text-lg">iPhone 16 Pro</h3>
-                      <p className="text-gray-600">Current: <span className="text-xl font-bold">£999</span></p>
-                    </div>
+
+            <div className={`relative transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className="relative bg-white rounded-2xl shadow-2xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-white/20" />
+                    <div className="w-3 h-3 rounded-full bg-white/20" />
+                    <div className="w-3 h-3 rounded-full bg-white/20" />
                   </div>
-                  <span className="status-badge status-prototype">Demo</span>
+                  <span className="text-white/80 text-sm font-medium ml-2">Merchant Dashboard</span>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-800 font-medium mb-2">I&apos;ll buy at this price</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">£</span>
-                      <input 
-                        type="number" 
-                        value={heroPrice}
-                        onChange={(e) => setHeroPrice(Number(e.target.value))}
-                        className="w-full px-4 py-3 pl-10 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all" 
-                        placeholder="Enter price"
-                      />
-                    </div>
+
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900">Waiting Customers</h3>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Live</span>
                   </div>
-                  
-                  <div>
-                    <label className="block text-gray-800 font-medium mb-2">Valid for</label>
-                    <select className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all">
-                      <option>7 days</option>
-                      <option>30 days</option>
-                      <option>60 days</option>
-                      <option>90 days</option>
-                    </select>
+
+                  <div className="space-y-3">
+                    {[
+                      { name: 'Sarah M.', product: 'iPhone 16 Pro', target: 899, current: 999, time: '2h ago' },
+                      { name: 'James K.', product: 'MacBook Pro 14"', target: 1599, current: 1799, time: '4h ago' },
+                      { name: 'Emma L.', product: 'AirPods Pro', target: 199, current: 249, time: '6h ago' },
+                    ].map((order, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-medium text-sm">
+                            {order.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900 text-sm">{order.product}</div>
+                            <div className="text-xs text-gray-500">{order.name} - {order.time}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="font-semibold text-green-600 text-sm">${order.target}</div>
+                            <div className="text-xs text-gray-400 line-through">${order.current}</div>
+                          </div>
+                          <button className="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg transition-all">
+                            Send Discount
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  
-                  <button 
-                    onClick={handleHeroOrderSubmit}
-                    className="btn-primary w-full text-lg py-4 rounded-lg font-semibold flex items-center justify-center"
-                  >
-                    <Heart className="mr-2 w-5 h-5" />
-                    Create Buy Order
-                  </button>
-                  
-                  <p className="text-center text-gray-500 text-sm flex items-center justify-center">
-                    <Info className="mr-1 w-4 h-4 text-blue-500" />
-                    Concept demonstration. Not processing real orders.
-                  </p>
+
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-sm text-gray-500">3 customers waiting</span>
+                    <span className="text-sm font-medium text-blue-600">$2,697 potential revenue</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-lg border border-gray-100 p-3 animate-bounce">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-gray-900">Order Converted!</div>
+                    <div className="text-xs text-gray-500">Sarah bought at $899</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-      
-      {/* What We Do Section */}
-      <section id="what-we-do" className="section-padding bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 scroll-animate">What is LIMINA?</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto scroll-animate">
-              LIMINA is a conditional buy order checkout service that merchants and businesses integrate into their platforms. 
-              We enable customers and B2B buyers to commit to purchase when specific conditions are met - turning abandoned carts 
-              and unmet procurement needs into future guaranteed sales.
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Stop Losing Sales to Price Sensitivity
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Every abandoned cart is lost revenue. LIMINA captures that intent and converts it into guaranteed sales.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="feature-card p-8 text-center stagger-item scroll-animate">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-primary-medium flex items-center justify-center text-white">
-                <ShoppingCart className="w-8 h-8" />
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, i) => (
+              <div
+                key={i}
+                className={`relative p-8 rounded-2xl transition-all duration-300 cursor-pointer ${
+                  activeFeature === i
+                    ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-200'
+                    : 'bg-gray-50 hover:bg-gray-100'
+                }`}
+                onClick={() => setActiveFeature(i)}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                  activeFeature === i ? 'bg-white/20' : 'bg-blue-100'
+                }`}>
+                  <div className={activeFeature === i ? 'text-white' : 'text-blue-600'}>
+                    {feature.icon}
+                  </div>
+                </div>
+
+                <h3 className={`text-xl font-bold mb-2 ${activeFeature === i ? 'text-white' : 'text-gray-900'}`}>
+                  {feature.title}
+                </h3>
+                <p className={`mb-4 ${activeFeature === i ? 'text-blue-100' : 'text-gray-600'}`}>
+                  {feature.description}
+                </p>
+
+                <div className={`flex items-baseline gap-2 ${activeFeature === i ? 'text-white' : 'text-blue-600'}`}>
+                  <span className="text-3xl font-bold">{feature.stat}</span>
+                  <span className={`text-sm ${activeFeature === i ? 'text-blue-100' : 'text-gray-500'}`}>
+                    {feature.statLabel}
+                  </span>
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-4 text-gray-800">For Shoppers</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Commit to buy at your ideal price. We automatically complete the purchase when conditions are met - 
-                no more missing deals or checking prices daily.
-              </p>
-            </div>
-            
-            <div className="feature-card p-8 text-center stagger-item scroll-animate">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-accent to-orange-400 flex items-center justify-center text-primary">
-                <Store className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-gray-800">For Merchants</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Convert price-sensitive browsers into committed buyers. See real demand at different price points and 
-                capture sales you&apos;d otherwise lose.
-              </p>
-            </div>
-            
-            <div className="feature-card p-8 text-center stagger-item scroll-animate">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
-                <Building className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-gray-800">For B2B</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Facilitate conditional B2B transactions. Buyers can submit binding purchase orders with specific price, 
-                quantity, and timeline conditions. Supports MOQ aggregation and group buys.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Demo Section */}
-      <section id="demo" className="section-padding bg-gradient-to-br from-primary/5 to-primary-medium/10">
+      <section id="how-it-works" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 scroll-animate">Live Demo: See LIMINA in Action</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto scroll-animate">Experience how conditional buy orders work for different use cases</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Three Steps to More Sales
+            </h2>
+            <p className="text-lg text-gray-600">
+              Simple for you. Simple for your customers.
+            </p>
           </div>
 
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex bg-white/50 backdrop-blur-md rounded-2xl p-2 shadow-lg">
-              <button 
-                onClick={() => setActiveTab('retail')}
-                className={`dashboard-tab flex items-center space-x-2 ${activeTab === 'retail' ? 'active' : ''}`}
-              >
-                <ShoppingCart className="w-4 h-4" />
-                <span>Retail Demo</span>
-              </button>
-              <button 
-                onClick={() => setActiveTab('b2b')}
-                className={`dashboard-tab flex items-center space-x-2 ${activeTab === 'b2b' ? 'active' : ''}`}
-              >
-                <Building className="w-4 h-4" />
-                <span>B2B Demo</span>
-              </button>
-              <button 
-                onClick={() => setActiveTab('merchant')}
-                className={`dashboard-tab flex items-center space-x-2 ${activeTab === 'merchant' ? 'active' : ''}`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Merchant View</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Demo Content */}
-          <div className="max-w-4xl mx-auto">
-            {activeTab === 'retail' && (
-              <div className="feature-card overflow-hidden floating scroll-animate">
-                <div className="p-6 bg-gradient-to-r from-primary to-primary-medium text-white">
-                  <h3 className="text-xl font-bold flex items-center">
-                    <Users className="mr-3 w-6 h-6" />
-                    Shopper Dashboard - Active Buy Orders
-                  </h3>
-                  <p className="mt-2 text-primary-light">Your conditional purchases at a glance</p>
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="font-semibold text-gray-800">Active Orders</h4>
-                    <div className="flex items-center space-x-2">
-                      <span className="status-badge status-monitoring">3 Active</span>
-                      <div className="pulse-dot w-3 h-3 bg-green-500 rounded-full"></div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: '1',
+                icon: <ShoppingCart className="w-6 h-6" />,
+                title: 'Customer Sets Price',
+                description: 'Instead of abandoning, customers tell you exactly what they\'ll pay. Payment is pre-authorized but not charged.',
+              },
+              {
+                step: '2',
+                icon: <BarChart3 className="w-6 h-6" />,
+                title: 'You See Demand',
+                description: 'View aggregated demand by product and price point. Understand exactly what customers will pay.',
+              },
+              {
+                step: '3',
+                icon: <Tag className="w-6 h-6" />,
+                title: 'Send Discount & Convert',
+                description: 'When ready, send personalized discount codes. Customers get notified and buy instantly.',
+              },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-blue-200 to-transparent -translate-x-1/2" />
+                )}
+                <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                      {item.step}
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                      {item.icon}
                     </div>
                   </div>
-                  
-                  <div className="space-y-4">
-                    <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">MacBook Pro 14&quot;</h4>
-                          <p className="text-sm text-gray-600">Buy at: £1,699 | Current: £1,799</p>
-                        </div>
-                        <span className="status-badge status-monitoring">Monitoring</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-600 font-medium flex items-center">
-                          <Activity className="mr-1 w-4 h-4" />
-                          94% chance based on price history
-                        </span>
-                        <span className="text-gray-500">23 days left</span>
-                      </div>
-                      <div className="mt-2">
-                        <div className="progress-bar">
-                          <div className="progress-fill bg-blue-500" style={{width: '94%'}}></div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">Sony WH-1000XM5</h4>
-                          <p className="text-sm text-gray-600">Buy at: £279 | Purchased: £279</p>
-                        </div>
-                        <span className="status-badge status-monitoring">✓ Complete</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-green-600 font-medium flex items-center">
-                          <CheckCircle className="mr-1 w-4 h-4" />
-                          Saved £50 (15%) from original price
-                        </span>
-                        <span className="text-gray-500">2 days ago</span>
-                      </div>
-                    </div>
-                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
+                  <p className="text-gray-600">{item.description}</p>
                 </div>
               </div>
-            )}
-
-            {activeTab === 'merchant' && (
-              <div className="feature-card overflow-hidden floating scroll-animate">
-                <div className="p-6 bg-gradient-to-r from-accent to-orange-400 text-primary">
-                  <h3 className="text-xl font-bold flex items-center">
-                    <Eye className="mr-3 w-6 h-6" />
-                    Merchant Analytics Dashboard
-                  </h3>
-                  <p className="mt-2 text-primary/80">Real-time demand intelligence</p>
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="font-semibold text-gray-800">Buy Order Analytics</h4>
-                    <div className="flex items-center space-x-2">
-                      <span className="status-badge status-monitoring flex items-center">
-                        <Eye className="mr-1 w-4 h-4" />
-                        247 Active Orders
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">iPhone 16 Pro</h4>
-                          <p className="text-sm text-gray-600">Current: £999 | Your cost: £720</p>
-                        </div>
-                        <div className="bid-indicator bid-high">
-                          87
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-700 mb-2">
-                        <span className="font-medium">87 customers</span> will buy at <span className="font-bold text-red-600">£899</span>
-                      </div>
-                      <div className="demand-bar mb-2">
-                        <div className="demand-fill bg-red-500" style={{width: '89%'}}></div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-red-600 font-medium text-sm">Revenue opportunity: £78,213</span>
-                        <button className="px-3 py-1 bg-red-600 text-white rounded text-sm font-semibold hover:bg-red-700">
-                          Execute Orders
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                      <div className="text-center">
-                        <p className="text-gray-600 text-sm">Total Potential</p>
-                        <p className="text-2xl font-bold text-primary">£142K</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-gray-600 text-sm">Avg Discount</p>
-                        <p className="text-2xl font-bold text-accent">12%</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-gray-600 text-sm">Conversion Rate</p>
-                        <p className="text-2xl font-bold text-green-600">89%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'b2b' && (
-              <div className="feature-card b2b-card overflow-hidden floating scroll-animate">
-                <div className="p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                  <h3 className="text-xl font-bold flex items-center">
-                    <Target className="mr-3 w-6 h-6" />
-                    B2B Conditional PO Management
-                  </h3>
-                  <p className="mt-2 text-blue-100">Buyer & Supplier View (Demo)</p>
-                </div>
-                
-                <div className="p-6">
-                  <div className="space-y-6">
-                    <div className="border-2 border-blue-300 rounded-lg p-6 bg-blue-50">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h4 className="font-bold text-lg text-gray-800">Steel Components (Grade S275)</h4>
-                          <p className="text-gray-600">Buyer: Acme Construction Ltd.</p>
-                        </div>
-                        <span className="status-badge status-pending">Pending Supplier Review</span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Committed Quantity</p>
-                          <p className="text-2xl font-bold text-gray-800">500 units</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Target Price/unit</p>
-                          <p className="text-2xl font-bold text-blue-600">£45.00</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">PO Validity</p>
-                          <p className="text-xl font-bold text-gray-800">45 days</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Supplier Action Required</span>
-                          <span className="font-semibold text-orange-500">Awaiting Acceptance</span>
-                        </div>
-                        <div className="demand-bar">
-                          <div className="demand-fill bg-orange-400" style={{width: '30%'}}></div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600 flex items-center">
-                          <Building className="mr-1 w-4 h-4" />
-                          Supplier: Global Steel Inc. (Demo)
-                        </p>
-                        <button className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center">
-                          <CheckCircle className="mr-1 w-4 h-4" />
-                          Accept Conditional PO
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="border border-green-200 rounded-lg p-6 bg-green-50">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">Bulk Order: Fasteners M12</h4>
-                          <p className="text-sm text-gray-600">Buyer: ConstructCo | Supplier: BoltWorld</p>
-                          <p className="text-sm text-gray-600">Status: Accepted, Awaiting Price Match for Execution</p>
-                        </div>
-                        <span className="status-badge status-accepted">PO Accepted</span>
-                      </div>
-                      <p className="text-green-600 font-medium flex items-center">
-                        <Heart className="mr-1 w-4 h-4" />
-                        Order will execute if price drops to £0.85/unit by July 15th.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-primary text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-2">
-              <div className="flex items-center mb-6">
-                <Logo />
-                <span className="text-2xl font-bold ml-3">LIMINA</span>
+      <section id="demo-section" className="py-20 bg-gradient-to-br from-blue-600 to-indigo-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              See It In Action
+            </h2>
+            <p className="text-lg text-blue-100 max-w-2xl mx-auto">
+              Explore our interactive demo. No signup required.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <Link
+              href="/dashboard?demo=true"
+              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Store className="w-7 h-7 text-white" />
               </div>
-              <p className="text-primary-light text-lg mb-6 max-w-md">
-                Pioneering conditional commerce through intelligent buy order technology. Converting abandoned intent 
-                and complex B2B needs into guaranteed sales.
+              <h3 className="text-2xl font-bold text-white mb-2">Merchant Dashboard</h3>
+              <p className="text-blue-100 mb-4">
+                See how merchants view customer demand, analyze pricing data, and send discount codes.
               </p>
-            </div>
-            
+              <span className="inline-flex items-center text-white font-medium group-hover:gap-3 transition-all">
+                Explore Dashboard
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </span>
+            </Link>
+
+            <Link
+              href="/customer?demo=true"
+              className="group bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Users className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Customer View</h3>
+              <p className="text-blue-100 mb-4">
+                Experience how customers track their buy orders and see when their target prices are met.
+              </p>
+              <span className="inline-flex items-center text-white font-medium group-hover:gap-3 transition-all">
+                View Customer Demo
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Platform</h3>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full text-blue-700 text-sm font-medium mb-4">
+                <Store className="w-4 h-4" />
+                E-Commerce
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">For Online Stores</h3>
               <ul className="space-y-3">
-                <li><a href="#what-we-do" className="text-primary-light hover:text-white transition-colors">What We Do</a></li>
-                <li><a href="#how-it-works" className="text-primary-light hover:text-white transition-colors">How It Works</a></li>
-                <li><a href="#solutions" className="text-primary-light hover:text-white transition-colors">Solutions</a></li>
-                <li><a href="#demo" className="text-primary-light hover:text-white transition-colors">Demo</a></li>
+                {[
+                  'Shopify & WooCommerce integration',
+                  'Embeddable widget for any website',
+                  'Real-time price sync',
+                  'Automatic discount code generation',
+                  'Email notifications to customers'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-600">{item}</span>
+                  </li>
+                ))}
               </ul>
             </div>
-            
+
             <div>
-              <h3 className="text-lg font-semibold mb-4">Company</h3>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 rounded-full text-indigo-700 text-sm font-medium mb-4">
+                <Building className="w-4 h-4" />
+                B2B
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">For B2B Procurement</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-primary-light hover:text-white transition-colors">Documentation (Coming Soon)</a></li>
-                <li><a href="#" className="text-primary-light hover:text-white transition-colors">Integration Guide (Coming Soon)</a></li>
-                <li><a href="#" className="text-primary-light hover:text-white transition-colors">Contact / Early Access</a></li>
+                {[
+                  'Conditional purchase orders',
+                  'Volume-based pricing triggers',
+                  'Group buying & MOQ aggregation',
+                  'Supplier acceptance workflow',
+                  'Enterprise-grade security'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-600">{item}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
-          
-          <div className="border-t border-white/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-primary-light">© 2025 LIMINA Technologies Ltd. All rights reserved.</p>
-            <div className="mt-4 md:mt-0 flex space-x-6">
-              <a href="#" className="text-primary-light hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="text-primary-light hover:text-white transition-colors">Terms of Service</a>
+        </div>
+      </section>
+
+      <section className="py-20 bg-gray-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            Ready to Convert More Sales?
+          </h2>
+          <p className="text-lg text-gray-400 mb-8">
+            Join merchants who are turning abandoned carts into revenue.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/dashboard?demo=true"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              <Play className="w-5 h-5 mr-2" />
+              Try Demo First
+            </Link>
+            <Link
+              href="/auth"
+              className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Get Started Free
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-gray-900 border-t border-gray-800 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center mb-4 md:mb-0">
+              <Logo />
+              <span className="text-xl font-bold ml-2 text-white">LIMINA</span>
             </div>
+            <p className="text-gray-500 text-sm">
+              2025 LIMINA Technologies Ltd. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
