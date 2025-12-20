@@ -12,10 +12,11 @@ import {
   Settings,
   BarChart3,
   Store,
-  Bell,
   User,
   LogOut,
-  Package
+  Package,
+  ArrowLeft,
+  ExternalLink
 } from 'lucide-react'
 
 const navigation = [
@@ -45,9 +46,7 @@ function DashboardLayoutContent({
   }, [])
 
   useEffect(() => {
-    // Skip auth check in demo mode
     if (isDemo) return
-
     if (!loading && (!user || user.role !== 'merchant')) {
       router.push('/auth')
     }
@@ -57,47 +56,49 @@ function DashboardLayoutContent({
     if (!confirm('Are you sure you want to sign out?')) {
       return
     }
-
     try {
       await signOut()
-      // Force a complete page refresh to clear all state
       window.location.href = '/auth'
     } catch (error) {
       console.error('Sign out failed:', error)
-      // Even if sign out fails, redirect to auth page
-      alert('Sign out failed, but you will be redirected to the login page.')
       window.location.href = '/auth'
     }
   }
 
-  // In demo mode, skip auth loading state
   if (!isDemo && loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
-  // In demo mode, allow access without auth
   if (!isDemo && (!user || user.role !== 'merchant')) {
     return null
   }
 
-  // Demo user for display purposes
   const displayUser = isDemo ? { name: 'Demo Merchant', email: 'demo@limina.io' } : user
+  const currentPage = navigation.find(item => item.href === pathname)?.name || 'Dashboard'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0b] text-white">
+      {/* Grain overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.015] z-50"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-        <div className="flex h-16 items-center justify-start px-6 border-b border-gray-200">
+      <div className="fixed inset-y-0 left-0 z-40 w-56 bg-[#0f0f10] border-r border-white/5">
+        <div className="flex h-14 items-center px-5 border-b border-white/5">
           <Logo />
-          <h1 className="ml-2 text-xl font-bold text-blue-600">Limina</h1>
+          <span className="ml-2 text-lg font-semibold tracking-tight">LIMINA</span>
         </div>
-        
-        <nav className="mt-6 px-3">
-          <div className="space-y-1">
+
+        <nav className="mt-4 px-3">
+          <div className="space-y-0.5">
             {navigation.map((item) => {
               const isActive = pathname === item.href
               const href = isDemo ? `${item.href}?demo=true` : item.href
@@ -105,17 +106,13 @@ function DashboardLayoutContent({
                 <Link
                   key={item.name}
                   href={href}
-                  className={`${
+                  className={`group flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-50 border-blue-500 text-blue-700'
-                      : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  } group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors`}
+                      ? 'bg-white/[0.08] text-white'
+                      : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                  }`}
                 >
-                  <item.icon
-                    className={`${
-                      isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
-                    } mr-3 h-5 w-5`}
-                  />
+                  <item.icon className={`h-4 w-4 ${isActive ? 'text-emerald-400' : 'text-white/40 group-hover:text-white/60'}`} />
                   {item.name}
                 </Link>
               )
@@ -124,33 +121,34 @@ function DashboardLayoutContent({
         </nav>
 
         {/* Bottom section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-blue-600" />
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-8 w-8 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center">
+              <User className="h-4 w-4 text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-white truncate">
                 {displayUser?.name || 'Guest'}
               </p>
-              <p className="text-xs text-gray-500 truncate">
-                {isDemo ? 'Demo Mode' : 'Merchant Account'}
+              <p className="text-xs text-white/40 truncate">
+                {isDemo ? 'Demo Mode' : 'Merchant'}
               </p>
             </div>
           </div>
           {isDemo ? (
             <Link
               href="/auth"
-              className="w-full flex items-center justify-center px-3 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors font-medium"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-emerald-500 text-black font-medium hover:bg-emerald-400 rounded-lg transition-colors"
             >
-              Sign Up Free
+              Get started
+              <ArrowLeft className="w-3 h-3 rotate-180" />
             </Link>
           ) : (
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
             >
-              <LogOut className="mr-3 h-4 w-4" />
+              <LogOut className="h-4 w-4" />
               Sign out
             </button>
           )}
@@ -158,26 +156,27 @@ function DashboardLayoutContent({
       </div>
 
       {/* Main content */}
-      <div className="pl-64">
-        {/* Top navigation */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="pl-56">
+        {/* Top bar */}
+        <div className="sticky top-0 z-30 bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-white/5">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {navigation.find(item => item.href === pathname)?.name || 'Dashboard'}
-                </h2>
+                <h1 className="text-xl font-semibold tracking-tight">{currentPage}</h1>
               </div>
-              <div className="flex items-center space-x-4">
-                <button className="relative p-2 text-gray-400 hover:text-gray-500">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-0 right-0 block h-2 w-2 bg-red-400 rounded-full"></span>
-                </button>
-                <Link 
-                  href="/" 
-                  className="text-sm text-gray-600 hover:text-blue-600"
+              <div className="flex items-center gap-4">
+                {isDemo && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs text-emerald-400 font-medium">Demo</span>
+                  </div>
+                )}
+                <Link
+                  href="/"
+                  className="flex items-center gap-1 text-sm text-white/50 hover:text-white transition-colors"
                 >
-                  ← Back to Site
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
                 </Link>
               </div>
             </div>
@@ -195,8 +194,8 @@ function DashboardLayoutContent({
 
 function DashboardFallback() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 }

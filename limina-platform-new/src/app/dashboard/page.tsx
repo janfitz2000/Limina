@@ -5,9 +5,20 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase-fixed'
-import { ShoppingCart, TrendingUp, DollarSign, Activity, AlertTriangle, Store, ArrowUpRight, ArrowDownRight, Eye } from 'lucide-react'
-import { DEMO_BUY_ORDERS, DEMO_STATS, DEMO_MERCHANT, DEMO_PRODUCTS } from '@/lib/demo-data'
-import { DemoTour, DASHBOARD_TOUR_STEPS } from '@/components/DemoTour'
+import {
+  ShoppingCart,
+  TrendingUp,
+  DollarSign,
+  Activity,
+  Store,
+  ArrowUpRight,
+  ArrowDownRight,
+  Package,
+  Users,
+  Clock,
+  ChevronRight
+} from 'lucide-react'
+import { DEMO_BUY_ORDERS, DEMO_STATS, DEMO_PRODUCTS } from '@/lib/demo-data'
 
 interface Product {
   id: string
@@ -49,10 +60,8 @@ function DashboardOverviewContent() {
   const [error, setError] = useState<string | null>(null)
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
-  const [stores, setStores] = useState<any[]>([])
 
   useEffect(() => {
-    // Demo mode - use static demo data
     if (isDemo) {
       const demoOrders = DEMO_BUY_ORDERS.map(order => ({
         id: order.id,
@@ -77,52 +86,24 @@ function DashboardOverviewContent() {
         avgDiscount: 0,
         conversionRate: DEMO_STATS.conversionRate,
       })
-      setStores([{ id: 'demo-store', name: 'Demo Shopify Store', platform: 'shopify', status: 'connected' }])
       setLoading(false)
       return
     }
 
-    // Real mode - requires authentication
     if (authLoading || !user || !user.merchant_id) return
 
     const fetchData = async () => {
       try {
         setLoading(true)
-
-        // Fetch buy orders for this merchant
         const { data: ordersData, error: ordersError } = await supabase
           .from('buy_orders')
-          .select(`
-            *,
-            products (
-              id,
-              title,
-              current_price,
-              price,
-              currency,
-              image_url
-            ),
-            customers (
-              id,
-              email,
-              name
-            )
-          `)
+          .select(`*, products (*), customers (*)`)
           .eq('merchant_id', user.merchant_id)
           .order('created_at', { ascending: false })
           .limit(10)
 
         if (ordersError) throw ordersError
 
-        // Fetch stores for this merchant
-        const { data: storesData, error: storesError } = await supabase
-          .from('stores')
-          .select('*')
-          .eq('merchant_id', user.merchant_id)
-
-        if (storesError) throw storesError
-
-        // Calculate basic stats from orders
         const ordersCount = ordersData?.length || 0
         const monitoring = ordersData?.filter(o => o.status === 'monitoring').length || 0
         const fulfilled = ordersData?.filter(o => o.status === 'fulfilled').length || 0
@@ -131,7 +112,6 @@ function DashboardOverviewContent() {
         const conversionRate = ordersCount > 0 ? Math.round((fulfilled / ordersCount) * 100) : 0
 
         setBuyOrders(ordersData || [])
-        setStores(storesData || [])
         setStats({
           total: ordersCount,
           monitoring,
@@ -142,7 +122,6 @@ function DashboardOverviewContent() {
           avgDiscount: 0,
           conversionRate
         })
-
         setLoading(false)
       } catch (err) {
         console.error('Error fetching data:', err)
@@ -154,311 +133,263 @@ function DashboardOverviewContent() {
     fetchData()
   }, [user, authLoading, isDemo])
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      monitoring: 'bg-blue-100 text-blue-800',
-      fulfilled: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      expired: 'bg-gray-100 text-gray-800',
-      cancelled: 'bg-red-100 text-red-800'
-    }
-    return badges[status as keyof typeof badges] || 'bg-gray-100 text-gray-800'
+  const formatCurrency = (amount: number) => `$${amount.toFixed(0)}`
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    if (diffHours < 1) return 'Just now'
+    if (diffHours < 24) return `${diffHours}h ago`
+    return `${Math.floor(diffHours / 24)}d ago`
   }
 
-  const formatCurrency = (amount: number) => `£${amount.toFixed(2)}`
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString()
-
-  // Demo mode bypasses auth loading
   if (!isDemo && (authLoading || loading)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading merchant dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
-  // Show loading for demo mode initial load
   if (isDemo && loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading demo dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">Error</div>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-white/50 mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-emerald-500 text-black rounded-lg font-medium hover:bg-emerald-400 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Demo Tour */}
-      {isDemo && (
-        <DemoTour
-          steps={DASHBOARD_TOUR_STEPS}
-          storageKey="dashboard-demo-tour"
-        />
+      {/* Stats Grid */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5 text-emerald-400" />
+              </div>
+              <span className="flex items-center text-xs text-emerald-400">
+                <ArrowUpRight className="w-3 h-3 mr-0.5" />
+                12%
+              </span>
+            </div>
+            <p className="text-2xl font-bold">{stats.total}</p>
+            <p className="text-sm text-white/40">Total orders</p>
+          </div>
+
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
+                <Clock className="h-5 w-5 text-blue-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-emerald-400">{stats.monitoring}</p>
+            <p className="text-sm text-white/40">Waiting customers</p>
+          </div>
+
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-purple-500/10 border border-purple-500/20 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-purple-400" />
+              </div>
+              <span className="flex items-center text-xs text-emerald-400">
+                <ArrowUpRight className="w-3 h-3 mr-0.5" />
+                8%
+              </span>
+            </div>
+            <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-sm text-white/40">Total revenue</p>
+          </div>
+
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-orange-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold">{stats.conversionRate}%</p>
+            <p className="text-sm text-white/40">Conversion rate</p>
+          </div>
+        </div>
       )}
 
-      {/* Demo Mode Banner */}
-      {isDemo && (
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Eye className="w-5 h-5" />
-              <span className="font-medium">Demo Mode - Viewing sample merchant dashboard</span>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Orders */}
+        <div className="lg:col-span-2 bg-white/[0.02] border border-white/5 rounded-xl">
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold">Recent orders</h3>
+              <p className="text-sm text-white/40">Latest customer demand</p>
             </div>
             <Link
-              href="/auth"
-              className="bg-white text-purple-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-purple-50 transition-colors"
+              href={isDemo ? '/dashboard/orders?demo=true' : '/dashboard/orders'}
+              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
             >
-              Sign Up Free
+              View all
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-        </div>
-      )}
-      {/* Header */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Welcome back, TechStore!</h3>
-            <p className="text-gray-600 mt-1">
-              Here's what's happening with your conditional buy orders today.
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <Link 
-              href="/dashboard/products" 
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Store className="w-4 h-4 mr-2" />
-              Manage Products
-            </Link>
-          </div>
-        </div>
-      </div>
 
-      {/* Enhanced Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Orders</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                  +12% from last month
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <ShoppingCart className="h-12 w-12 text-blue-600 opacity-20" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Active Monitoring</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.monitoring}</p>
-                <p className="text-sm text-blue-600 mt-1">
-                  {stats.monitoring > 0 ? 'Orders waiting for price drops' : 'No active orders'}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <Activity className="h-12 w-12 text-green-600 opacity-20" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalRevenue)}</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                  +8% from last month
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <DollarSign className="h-12 w-12 text-purple-600 opacity-20" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Conversion Rate</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.conversionRate}%</p>
-                <p className="text-sm text-orange-600 flex items-center mt-1">
-                  <ArrowDownRight className="w-4 h-4 mr-1" />
-                  -2% from last month
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-12 w-12 text-orange-600 opacity-20" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recent Activity & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Buy Orders */}
-        <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Recent Buy Orders</h3>
-                <p className="text-sm text-gray-600 mt-1">Latest customer demand signals</p>
-              </div>
-              <Link 
-                href="/dashboard/orders" 
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          <div className="p-5 space-y-3">
+            {buyOrders.slice(0, 5).map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
               >
-                View all →
+                <div className="flex items-center gap-4">
+                  {order.products?.image_url ? (
+                    <img
+                      className="h-10 w-10 rounded-lg object-cover"
+                      src={order.products.image_url}
+                      alt={order.products.title}
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-white/30" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-medium text-sm">{order.products?.title || 'Product'}</div>
+                    <div className="text-xs text-white/40">
+                      {order.customer_name} wants {formatCurrency(order.target_price)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                    order.status === 'monitoring'
+                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      : order.status === 'fulfilled'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-white/5 text-white/40'
+                  }`}>
+                    {order.status === 'monitoring' ? 'Waiting' : order.status}
+                  </span>
+                  <span className="text-xs text-white/30">{formatDate(order.created_at)}</span>
+                </div>
+              </div>
+            ))}
+            {buyOrders.length === 0 && (
+              <div className="text-center py-8 text-white/30">
+                No orders yet
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <h3 className="font-semibold mb-4">Quick actions</h3>
+            <div className="space-y-2">
+              <Link
+                href={isDemo ? '/dashboard/orders?demo=true' : '/dashboard/orders'}
+                className="flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-white/[0.04] rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">View waiting customers</div>
+                  <div className="text-xs text-white/40">{stats?.monitoring || 0} customers</div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/30" />
+              </Link>
+              <Link
+                href={isDemo ? '/dashboard/products?demo=true' : '/dashboard/products'}
+                className="flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-white/[0.04] rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <Package className="w-4 h-4 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">Manage products</div>
+                  <div className="text-xs text-white/40">Sync & pricing</div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/30" />
+              </Link>
+              <Link
+                href={isDemo ? '/dashboard/analytics?demo=true' : '/dashboard/analytics'}
+                className="flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-white/[0.04] rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">View analytics</div>
+                  <div className="text-xs text-white/40">Demand trends</div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/30" />
               </Link>
             </div>
           </div>
-          
-          <div className="p-6">
-            <div className="space-y-4">
-              {buyOrders.slice(0, 5).map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    {order.products?.image_url && (
-                      <img 
-                        className="h-12 w-12 rounded-lg object-cover" 
-                        src={order.products.image_url} 
-                        alt={order.products.title} 
-                      />
-                    )}
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {order.products?.title || 'Product'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {order.customer_name} • {formatCurrency(order.target_price)} target
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(order.status)}`}>
-                      {order.status}
-                    </span>
-                    <div className="text-sm text-gray-500">
-                      {formatDate(order.created_at)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {buyOrders.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No buy orders yet. Customer orders will appear here.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Quick Actions Sidebar */}
-        <div className="space-y-6">
           {/* Integration Status */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Integration</h3>
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <h3 className="font-semibold mb-4">Integration</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Shopify Connected</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+                  <span className="text-sm text-white/60">Shopify</span>
                 </div>
-                <button className="text-blue-600 hover:text-blue-700 text-sm">Configure</button>
+                <span className="text-xs text-emerald-400">Connected</span>
               </div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Payment Setup</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+                  <span className="text-sm text-white/60">Stripe</span>
                 </div>
-                <button className="text-blue-600 hover:text-blue-700 text-sm">Setup</button>
+                <span className="text-xs text-emerald-400">Active</span>
               </div>
             </div>
           </div>
 
-          {/* Alerts */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
-              Alerts
-            </h3>
-            <div className="space-y-3">
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <p className="text-sm text-orange-800">
-                  <strong>Price Alert:</strong> 3 orders waiting for MacBook price drop to £1,200
-                </p>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
-                  <strong>New Order:</strong> Customer wants iPhone 15 at £650
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Summary</h3>
+          {/* Today */}
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <h3 className="font-semibold mb-4">Today</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">New Orders</span>
+                <span className="text-sm text-white/40">New orders</span>
                 <span className="text-sm font-medium">2</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Fulfilled</span>
-                <span className="text-sm font-medium text-green-600">1</span>
+                <span className="text-sm text-white/40">Fulfilled</span>
+                <span className="text-sm font-medium text-emerald-400">1</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Revenue</span>
-                <span className="text-sm font-medium">£1,250</span>
+                <span className="text-sm text-white/40">Revenue</span>
+                <span className="text-sm font-medium">$1,250</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   )
 }
 
 function DashboardFallback() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
-      </div>
+    <div className="flex items-center justify-center py-20">
+      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 }
