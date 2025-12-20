@@ -57,10 +57,11 @@ export async function middleware(req: NextRequest) {
   // Refresh session if expired
   const { data: { session } } = await supabase.auth.getSession()
 
-  const { pathname } = req.nextUrl
+  const { pathname, searchParams } = req.nextUrl
+  const isDemo = searchParams.get('demo') === 'true'
 
-  // Protect dashboard routes
-  if (pathname.startsWith('/dashboard')) {
+  // Protect dashboard routes (skip auth check in demo mode)
+  if (pathname.startsWith('/dashboard') && !isDemo) {
     if (!session) {
       // Redirect to auth if no session
       const redirectUrl = new URL('/auth', req.url)
