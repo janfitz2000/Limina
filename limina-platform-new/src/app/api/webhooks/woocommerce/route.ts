@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { discountCodeService } from '@/lib/discounts'
 
 interface WooCommerceProduct {
   id: number;
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
         break;
       
       case 'order.updated':
+      case 'order.created':
         await handleOrderUpdate(supabase, data);
         break;
       
@@ -240,9 +242,14 @@ async function handleProductDelete(supabase: SupabaseClient, productData: WooCom
   console.log('[WooCommerce Webhook] Product deleted successfully');
 }
 
-async function handleOrderUpdate(supabase: SupabaseClient, orderData: WooCommerceOrder) {
+async function handleOrderUpdate(supabase: SupabaseClient, orderData: any) {
   console.log('[WooCommerce Webhook] Processing order update:', orderData.id);
-  
+
+  // Track discount code usage if order is paid/completed
+  if (orderData.status === 'processing' || orderData.status === 'completed') {
+    await trackWooCommerceDiscountCode(supabase, orderData);
+  }
+
   // Handle order status changes that might affect buy orders
   if (orderData.status === 'cancelled' || orderData.status === 'refunded') {
     const woocommerceOrderId = orderData.id.toString();
@@ -262,6 +269,67 @@ async function handleOrderUpdate(supabase: SupabaseClient, orderData: WooCommerc
     } else {
       console.log('[WooCommerce Webhook] Cancelled buy orders for order:', woocommerceOrderId);
     }
+  }
+}
+
+/**
+ * Track WooCommerce discount code usage
+ */
+async function trackWooCommerceDiscountCode(supabase: SupabaseClient, orderData: any) {
+  try {
+    // Check if order has coupon codes applied
+    const couponLines = orderData.coupon_lines || [];
+
+    if (couponLines.length === 0) {
+      return;
+    }
+
+    for (const coupon of couponLines) {
+      const code = coupon.code;
+
+      // Check if this is one of our LIMINA codes
+      if (!code.startsWith('LIMINA-')) {
+        continue;
+      }
+
+      // Find the discount code in our database
+      const { data: codeRecord, error } = await supabase
+        .from('discount_codes')
+        .select('*')
+        .eq('code', code)
+        .eq('platform', 'woocommerce')
+        .single();
+
+      if (error || !codeRecord) {
+        console.log(`[WooCommerce Webhook] Discount code ${code} not found in database`);
+        continue;
+      }
+
+      // Skip if already marked as used
+      if (codeRecord.status === 'used') {
+        continue;
+      }
+
+      // Mark as used
+      await discountCodeService.markCodeAsUsed(code, 'woocommerce');
+
+      console.log(`[WooCommerce Webhook] Marked discount code ${code} as used for order ${orderData.id}`);
+
+      // Create notification for merchant
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: codeRecord.merchant_id,
+          user_type: 'merchant',
+          buy_order_id: codeRecord.buy_order_id,
+          title: 'Discount Code Redeemed! 💰',
+          message: `Customer used code ${code} - Order #${orderData.number || orderData.id}`,
+          type: 'order_fulfilled',
+          created_at: new Date().toISOString()
+        });
+    }
+  } catch (error) {
+    console.error('[WooCommerce Webhook] Error tracking discount code:', error);
   }
 }
 
