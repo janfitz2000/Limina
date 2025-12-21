@@ -2,10 +2,11 @@
 
 import { useState, useEffect, Suspense, useMemo } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { signOut } from '@/lib/auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/Logo'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, LogOut } from 'lucide-react'
 
 function AuthContent() {
   const [isSignIn, setIsSignIn] = useState(true)
@@ -15,9 +16,20 @@ function AuthContent() {
   const [companyName, setCompanyName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showSignOut, setShowSignOut] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = useMemo(() => createClient(), [])
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      window.location.reload()
+    } catch (err) {
+      console.error('Sign out failed:', err)
+      window.location.reload()
+    }
+  }
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
@@ -28,12 +40,26 @@ function AuthContent() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-        router.push(redirectTo)
+        // Check if user has a merchant profile before redirecting
+        const { data: merchant } = await supabase
+          .from('merchants')
+          .select('id')
+          .eq('user_id', user.id)
+          .single()
+
+        if (merchant) {
+          const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+          router.push(redirectTo)
+        } else {
+          // User exists but no merchant profile - let them stay on auth page
+          // They can sign out or the profile may be created shortly
+          setError('Your merchant account is being set up. Please wait a moment and refresh, or sign out to use a different account.')
+          setShowSignOut(true)
+        }
       }
     }
     checkUser()
-  }, [searchParams, router])
+  }, [searchParams, router, supabase])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -147,6 +173,15 @@ function AuthContent() {
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
               {error}
+              {showSignOut && (
+                <button
+                  onClick={handleSignOut}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              )}
             </div>
           )}
 
