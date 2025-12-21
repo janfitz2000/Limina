@@ -89,9 +89,25 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth page
+  // Redirect authenticated users away from auth page (only if they have a merchant profile)
   if (pathname === '/auth' && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
+    // Check if user has a merchant profile before redirecting
+    try {
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (merchant) {
+        // Only redirect to dashboard if they're a merchant
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+      // If no merchant profile, let them stay on auth page to see sign out option
+    } catch (error) {
+      // If error checking, let them stay on auth page
+      console.error('Middleware merchant check error:', error)
+    }
   }
 
   return response
