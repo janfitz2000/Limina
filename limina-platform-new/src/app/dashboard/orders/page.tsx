@@ -190,7 +190,7 @@ function OrdersPageContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -212,7 +212,7 @@ function OrdersPageContent() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-white/40">Waiting</p>
-              <p className="text-2xl font-bold text-emerald-400">{stats.activeOrders}</p>
+              <p className="text-2xl font-bold text-[#C9A227]">{stats.activeOrders}</p>
             </div>
             <Users className="h-8 w-8 text-white/10" />
           </div>
@@ -232,7 +232,7 @@ function OrdersPageContent() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-white/40">Potential</p>
-              <p className="text-2xl font-bold text-purple-400">{formatCurrency(stats.potentialRevenue)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(stats.potentialRevenue)}</p>
             </div>
             <TrendingUp className="h-8 w-8 text-white/10" />
           </div>
@@ -247,7 +247,7 @@ function OrdersPageContent() {
               onClick={() => setViewMode('products')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'products'
-                  ? 'bg-emerald-500 text-black'
+                  ? 'bg-[#C9A227] text-[#0C0A09]'
                   : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -258,7 +258,7 @@ function OrdersPageContent() {
               onClick={() => setViewMode('orders')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'orders'
-                  ? 'bg-emerald-500 text-black'
+                  ? 'bg-[#C9A227] text-[#0C0A09]'
                   : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -273,13 +273,13 @@ function OrdersPageContent() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 outline-none"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:border-[#C9A227]/50 focus:ring-1 focus:ring-[#C9A227]/50 outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <select
-              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-emerald-500/50 outline-none"
+              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-[#C9A227]/50 outline-none"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -330,7 +330,7 @@ function OrdersPageContent() {
 
                     <div className="flex items-center gap-8">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-emerald-400">{group.totalCustomers}</p>
+                        <p className="text-2xl font-bold text-[#C9A227]">{group.totalCustomers}</p>
                         <p className="text-xs text-white/40">waiting</p>
                       </div>
                       <div className="text-center">
@@ -338,7 +338,7 @@ function OrdersPageContent() {
                         <p className="text-xs text-white/40">lowest</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-lg font-semibold text-purple-400">{formatCurrency(group.averageTarget)}</p>
+                        <p className="text-lg font-semibold text-[#C9A227]">{formatCurrency(group.averageTarget)}</p>
                         <p className="text-xs text-white/40">average</p>
                       </div>
                       {expandedProducts.has(group.product.id) ? (
@@ -364,8 +364,8 @@ function OrdersPageContent() {
                         return (
                           <div key={order.id} className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.02]">
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center">
-                                <span className="text-emerald-400 font-medium text-sm">
+                              <div className="w-10 h-10 bg-[#C9A227]/10 border border-[#C9A227]/20 rounded-full flex items-center justify-center">
+                                <span className="text-[#C9A227] font-medium text-sm">
                                   {(order.customers?.name || 'U')[0].toUpperCase()}
                                 </span>
                               </div>
@@ -377,7 +377,7 @@ function OrdersPageContent() {
 
                             <div className="flex items-center gap-6">
                               <div className="text-right">
-                                <p className="font-semibold text-emerald-400">{formatCurrency(order.target_price)}</p>
+                                <p className="font-semibold text-[#C9A227]">{formatCurrency(order.target_price)}</p>
                                 <p className="text-xs text-white/40">{discountPercent}% off</p>
                               </div>
                               <div className="text-right">
@@ -387,7 +387,7 @@ function OrdersPageContent() {
                                 <p className="text-xs text-white/30">{formatDate(order.created_at)}</p>
                               </div>
                               <button
-                                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-black rounded-lg text-sm font-medium hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#C9A227] text-[#0C0A09] rounded-lg text-sm font-medium hover:bg-[#D4AF37] transition-colors disabled:opacity-50"
                                 disabled={sendingDiscount === order.id}
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -395,11 +395,11 @@ function OrdersPageContent() {
                                 }}
                               >
                                 {sendingDiscount === order.id ? (
-                                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                  <div className="w-4 h-4 border-2 border-[#0C0A09] border-t-transparent rounded-full animate-spin" />
                                 ) : (
                                   <>
                                     <Tag className="w-4 h-4" />
-                                    Send
+                                    Send offer
                                   </>
                                 )}
                               </button>
@@ -451,14 +451,14 @@ function OrdersPageContent() {
                       <div className="text-sm">{order.customers?.name}</div>
                       <div className="text-xs text-white/40">{order.customers?.email}</div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-emerald-400">{formatCurrency(order.target_price)}</td>
+                    <td className="px-6 py-4 font-medium text-[#C9A227]">{formatCurrency(order.target_price)}</td>
                     <td className="px-6 py-4 text-white/60">{formatCurrency(order.current_price)}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${
                         order.status === 'monitoring'
-                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          ? 'bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/20'
                           : order.status === 'fulfilled'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                           : 'bg-white/5 text-white/40'
                       }`}>
                         {order.status === 'monitoring' ? <Clock className="w-3 h-3" /> : order.status === 'fulfilled' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
@@ -469,16 +469,16 @@ function OrdersPageContent() {
                     <td className="px-6 py-4">
                       {order.status === 'monitoring' && (
                         <button
-                          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-black text-xs font-medium rounded hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-[#C9A227] text-[#0C0A09] text-xs font-medium rounded hover:bg-[#D4AF37] transition-colors disabled:opacity-50"
                           disabled={sendingDiscount === order.id}
                           onClick={() => handleSendDiscount(order.id, order.customers?.email || '', order.products?.title || '', order.target_price)}
                         >
                           {sendingDiscount === order.id ? (
-                            <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            <div className="w-3 h-3 border-2 border-[#0C0A09] border-t-transparent rounded-full animate-spin" />
                           ) : (
                             <>
                               <Tag className="w-3 h-3" />
-                              Send
+                              Send offer
                             </>
                           )}
                         </button>
@@ -501,7 +501,7 @@ function OrdersPageContent() {
 function OrdersPageFallback() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 }
