@@ -190,7 +190,7 @@ export default function LandingPage() {
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
 
                   {/* Header */}
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center justify-between mb-6 relative z-10">
                     <div>
                       <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1">Live Demand</div>
                       <div className="text-2xl font-bold">iPhone 16 Pro</div>
@@ -211,7 +211,7 @@ export default function LandingPage() {
                         onMouseLeave={() => setActivePrice(null)}
                       >
                         {/* Customer stack - fixed height container with bottom-aligned dots */}
-                        <div className="h-48 relative">
+                        <div className="h-52 relative overflow-hidden">
                           <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-1">
                             {tier.names.map((name, i) => (
                               <div
