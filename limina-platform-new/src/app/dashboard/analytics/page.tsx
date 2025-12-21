@@ -90,7 +90,7 @@ function AnalyticsContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -115,7 +115,7 @@ function AnalyticsContent() {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500/50 outline-none"
+            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-[#C9A227]/50 outline-none"
           >
             <option value="7d">7 days</option>
             <option value="30d">30 days</option>
@@ -130,12 +130,12 @@ function AnalyticsContent() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-emerald-400" />
+            <div className="w-10 h-10 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-[#C9A227]" />
             </div>
-            <span className="flex items-center text-xs text-emerald-400">
+            <span className="flex items-center text-xs text-[#C9A227]">
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
               12%
             </span>
@@ -144,12 +144,12 @@ function AnalyticsContent() {
           <p className="text-sm text-white/40">Total revenue</p>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
-              <ShoppingCart className="h-5 w-5 text-blue-400" />
+            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+              <ShoppingCart className="h-5 w-5 text-white/60" />
             </div>
-            <span className="flex items-center text-xs text-emerald-400">
+            <span className="flex items-center text-xs text-[#C9A227]">
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
               8%
             </span>
@@ -158,12 +158,12 @@ function AnalyticsContent() {
           <p className="text-sm text-white/40">Total orders</p>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-purple-500/10 border border-purple-500/20 rounded-lg flex items-center justify-center">
-              <Target className="h-5 w-5 text-purple-400" />
+            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+              <Target className="h-5 w-5 text-white/60" />
             </div>
-            <span className="flex items-center text-xs text-emerald-400">
+            <span className="flex items-center text-xs text-[#C9A227]">
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
               3%
             </span>
@@ -172,10 +172,10 @@ function AnalyticsContent() {
           <p className="text-sm text-white/40">Conversion rate</p>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-orange-400" />
+            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white/60" />
             </div>
           </div>
           <p className="text-2xl font-bold">${overview.averageOrderValue}</p>
@@ -196,7 +196,7 @@ function AnalyticsContent() {
                   <div className="w-full flex flex-col items-center">
                     <span className="text-xs text-white/40 mb-1">{day.orders}</span>
                     <div
-                      className="w-full bg-gradient-to-t from-emerald-500/60 to-emerald-400/80 rounded-t transition-all hover:from-emerald-500 hover:to-emerald-400"
+                      className="w-full bg-gradient-to-t from-[#C9A227]/60 to-[#C9A227]/80 rounded-t transition-all hover:from-[#C9A227] hover:to-[#D4AF37]"
                       style={{ height: `${Math.max(height, 10)}%` }}
                     />
                   </div>
@@ -215,8 +215,8 @@ function AnalyticsContent() {
           <h3 className="font-semibold mb-4">Order status</h3>
           <div className="space-y-4">
             {[
-              { label: 'Active', value: overview.activeOrders, color: 'bg-blue-500', percentage: overview.totalOrders > 0 ? (overview.activeOrders / overview.totalOrders * 100) : 0 },
-              { label: 'Fulfilled', value: overview.fulfilledOrders, color: 'bg-emerald-500', percentage: overview.totalOrders > 0 ? (overview.fulfilledOrders / overview.totalOrders * 100) : 0 },
+              { label: 'Active', value: overview.activeOrders, color: 'bg-[#C9A227]', percentage: overview.totalOrders > 0 ? (overview.activeOrders / overview.totalOrders * 100) : 0 },
+              { label: 'Fulfilled', value: overview.fulfilledOrders, color: 'bg-green-500', percentage: overview.totalOrders > 0 ? (overview.fulfilledOrders / overview.totalOrders * 100) : 0 },
               { label: 'Other', value: Math.max(0, overview.totalOrders - overview.activeOrders - overview.fulfilledOrders), color: 'bg-white/20', percentage: overview.totalOrders > 0 ? ((overview.totalOrders - overview.activeOrders - overview.fulfilledOrders) / overview.totalOrders * 100) : 0 },
             ].map((item) => (
               <div key={item.label}>
@@ -241,11 +241,11 @@ function AnalyticsContent() {
           <div className="space-y-4">
             <div className="flex items-center justify-between py-2 border-b border-white/5">
               <span className="text-white/40">Active orders</span>
-              <span className="font-semibold text-blue-400">{overview.activeOrders}</span>
+              <span className="font-semibold text-[#C9A227]">{overview.activeOrders}</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-white/5">
               <span className="text-white/40">Fulfilled</span>
-              <span className="font-semibold text-emerald-400">{overview.fulfilledOrders}</span>
+              <span className="font-semibold text-green-400">{overview.fulfilledOrders}</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-white/5">
               <span className="text-white/40">Total orders</span>
@@ -272,7 +272,7 @@ function AnalyticsContent() {
         {isDemo ? (
           <div className="space-y-4">
             {DEMO_DEMAND_BY_PRODUCT.filter(p => p.totalWaiting > 0).map((item) => (
-              <div key={item.product.id} className="bg-white/[0.02] border border-white/5 rounded-lg p-4 hover:border-emerald-500/20 transition-colors">
+              <div key={item.product.id} className="bg-white/[0.02] border border-white/5 rounded-lg p-4 hover:border-[#C9A227]/20 transition-colors">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     {item.product.image_url ? (
@@ -292,7 +292,7 @@ function AnalyticsContent() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-emerald-400">{item.totalWaiting}</div>
+                    <div className="text-2xl font-bold text-[#C9A227]">{item.totalWaiting}</div>
                     <div className="text-xs text-white/40">waiting</div>
                   </div>
                 </div>
@@ -303,9 +303,9 @@ function AnalyticsContent() {
                     {item.pricePoints.map((point) => (
                       <div
                         key={point.price}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg"
                       >
-                        <span className="font-semibold text-emerald-400">${point.price}</span>
+                        <span className="font-semibold text-[#C9A227]">${point.price}</span>
                         <span className="text-white/30">-</span>
                         <span className="flex items-center gap-1 text-white/60">
                           <Users className="h-3 w-3" />
@@ -318,7 +318,7 @@ function AnalyticsContent() {
 
                 <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-sm">
                   <span className="text-white/40">Range: ${item.lowestAsk} - ${item.highestAsk}</span>
-                  <span className="font-medium text-emerald-400">${item.potentialRevenue.toLocaleString()} potential</span>
+                  <span className="font-medium text-[#C9A227]">${item.potentialRevenue.toLocaleString()} potential</span>
                 </div>
               </div>
             ))}
@@ -336,7 +336,7 @@ function AnalyticsContent() {
                     {product.demandByPrice.map((point) => (
                       <div
                         key={point.price}
-                        className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-sm"
+                        className="px-3 py-1 bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] rounded-lg text-sm"
                       >
                         ${point.price}: {point.orders}
                       </div>
@@ -365,8 +365,8 @@ function AnalyticsContent() {
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${
-                    activity.status === 'fulfilled' ? 'bg-emerald-400' :
-                    activity.status === 'monitoring' ? 'bg-blue-400' : 'bg-white/30'
+                    activity.status === 'fulfilled' ? 'bg-green-400' :
+                    activity.status === 'monitoring' ? 'bg-[#C9A227]' : 'bg-white/30'
                   }`} />
                   <div>
                     <span className="text-sm font-medium">
@@ -378,7 +378,7 @@ function AnalyticsContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-emerald-400">${activity.target_price}</span>
+                  <span className="text-sm font-medium text-[#C9A227]">${activity.target_price}</span>
                   <span className="text-xs text-white/30">
                     {new Date(activity.created_at).toLocaleDateString()}
                   </span>
@@ -398,7 +398,7 @@ export default function AnalyticsPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <AnalyticsContent />

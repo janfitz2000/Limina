@@ -1,58 +1,147 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 
-export function Logo() {
+interface LogoProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  animate?: boolean
+}
+
+export function Logo({ size = 'md', animate = true }: LogoProps) {
   const logoRef = useRef<HTMLDivElement>(null)
+  const hasAnimated = useRef(false)
 
-  const handleLogoClick = () => {
+  const sizeMap = {
+    sm: 32,
+    md: 40,
+    lg: 56,
+    xl: 100,
+  }
+
+  const actualSize = sizeMap[size]
+
+  useEffect(() => {
+    if (animate && !hasAnimated.current && logoRef.current) {
+      hasAnimated.current = true
+      triggerAnimation()
+    }
+  }, [animate])
+
+  const triggerAnimation = () => {
     if (!logoRef.current) return
-    
-    const check = logoRef.current.querySelector('#header-check') as SVGPathElement
-    const coin = logoRef.current.querySelector('#header-coin') as SVGCircleElement
-    
-    if (check && coin) {
-      // Reset animations
-      check.style.animation = 'none'
-      coin.style.animation = 'none'
-      
-      // Trigger reflow
-      void (check as unknown as HTMLElement).offsetWidth
-      void (coin as unknown as HTMLElement).offsetWidth
-      
-      // Restart animations
-      check.style.animation = 'draw-check 0.8s ease-out forwards'
-      coin.style.animation = 'coin-emerge-spin 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s forwards'
+
+    const checkmark = logoRef.current.querySelector('#checkmark') as SVGPathElement
+
+    if (checkmark) {
+      checkmark.style.animation = 'none'
+      void (checkmark as unknown as HTMLElement).offsetWidth
+      checkmark.style.animation = 'draw-checkmark 0.6s ease-out forwards'
     }
   }
 
+  const handleLogoClick = () => {
+    hasAnimated.current = false
+    triggerAnimation()
+  }
+
   return (
-    <div 
+    <div
       ref={logoRef}
-      className="limina-logo cursor-pointer" 
-      id="nav-logo"
+      className="limina-logo cursor-pointer select-none"
       onClick={handleLogoClick}
+      style={{ width: actualSize, height: actualSize }}
     >
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" rx="25" fill="#10344C"/>
+      <svg
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ width: '100%', height: '100%', overflow: 'visible' }}
+      >
+        <defs>
+          <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#D4AF37" />
+            <stop offset="50%" stopColor="#C9A227" />
+            <stop offset="100%" stopColor="#B8960B" />
+          </linearGradient>
+          <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Dark background with gold border */}
+        <rect
+          x="4"
+          y="4"
+          width="92"
+          height="92"
+          rx="12"
+          fill="#0C0A09"
+          stroke="url(#goldGradient)"
+          strokeWidth="2"
+        />
+
+        {/* Gold checkmark - clean and confident */}
         <path
-          id="header-check"
-          d="M15 55 L40 80 L85 22"
-          stroke="#FFFFFF"
-          strokeWidth="12"
+          id="checkmark"
+          d="M 28 52 L 44 68 L 72 32"
+          stroke="url(#goldGradient)"
+          strokeWidth="10"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
+          filter="url(#goldGlow)"
         />
-        <circle
-          id="header-coin"
-          cx="39"
-          cy="50"
-          r="9"
-          fill="#FACC15"
-          stroke="#F59E0B"
-          strokeWidth="2"
-        />
+      </svg>
+
+      <style jsx>{`
+        .limina-logo {
+          transition: transform 0.15s ease;
+        }
+        .limina-logo:hover {
+          transform: scale(1.05);
+        }
+        .limina-logo:active {
+          transform: scale(0.95);
+        }
+
+        #checkmark {
+          stroke-dasharray: 100;
+          stroke-dashoffset: 100;
+        }
+
+        @keyframes draw-checkmark {
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export function LogoStatic({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' | 'xl' }) {
+  const sizeMap = {
+    sm: 32,
+    md: 40,
+    lg: 56,
+    xl: 100,
+  }
+
+  return (
+    <div style={{ width: sizeMap[size], height: sizeMap[size] }}>
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+        <defs>
+          <linearGradient id="goldGradientStatic" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#D4AF37" />
+            <stop offset="50%" stopColor="#C9A227" />
+            <stop offset="100%" stopColor="#B8960B" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="92" height="92" rx="12" fill="#0C0A09" stroke="url(#goldGradientStatic)" strokeWidth="2" />
+        <path d="M 28 52 L 44 68 L 72 32" stroke="url(#goldGradientStatic)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
     </div>
   )

@@ -93,13 +93,8 @@ export default function PaymentsPage() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-48 bg-gray-200 rounded-lg"></div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
-          ))}
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -108,27 +103,26 @@ export default function PaymentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-        <p className="text-gray-500 mt-1">Manage your earnings and payouts</p>
+        <p className="text-white/40 text-sm">Manage your earnings and payouts</p>
       </div>
 
       {/* Stripe Connection Status */}
       {!stripeConnected ? (
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white">
+        <div className="bg-gradient-to-r from-[#C9A227]/20 to-[#C9A227]/10 border border-[#C9A227]/30 rounded-xl p-8">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <CreditCard className="h-6 w-6" />
+                <CreditCard className="h-6 w-6 text-[#C9A227]" />
                 <h2 className="text-xl font-bold">Connect with Stripe</h2>
               </div>
-              <p className="text-purple-100 max-w-xl mb-6">
+              <p className="text-white/60 max-w-xl mb-6">
                 Connect your Stripe account to receive payouts from fulfilled buy orders.
                 Stripe handles all payment processing securely.
               </p>
               <button
                 onClick={handleConnectStripe}
                 disabled={connecting}
-                className="px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-3 bg-[#C9A227] text-[#0C0A09] rounded-lg font-bold hover:bg-[#D4AF37] transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {connecting ? (
                   <>
@@ -144,25 +138,25 @@ export default function PaymentsPage() {
               </button>
             </div>
             <div className="hidden lg:block">
-              <Building2 className="h-24 w-24 text-purple-200" />
+              <Building2 className="h-24 w-24 text-[#C9A227]/30" />
             </div>
           </div>
         </div>
       ) : (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-full">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="p-2 bg-green-500/20 rounded-full">
+              <CheckCircle className="h-6 w-6 text-green-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-green-900">Stripe Connected</h3>
-              <p className="text-sm text-green-700">Your account is ready to receive payouts</p>
+              <h3 className="font-semibold text-green-400">Stripe Connected</h3>
+              <p className="text-sm text-green-400/70">Your account is ready to receive payouts</p>
             </div>
             <a
               href="https://dashboard.stripe.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto flex items-center gap-2 px-4 py-2 text-sm text-green-700 hover:text-green-900 hover:bg-green-100 rounded-lg transition-colors"
+              className="ml-auto flex items-center gap-2 px-4 py-2 text-sm text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-lg transition-colors"
             >
               Open Stripe Dashboard
               <ExternalLink className="h-4 w-4" />
@@ -173,79 +167,79 @@ export default function PaymentsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <DollarSign className="h-5 w-5 text-green-600" />
+            <div className="w-10 h-10 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-[#C9A227]" />
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-500">Total Earnings</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <h3 className="text-sm font-medium text-white/40">Total Earnings</h3>
+          <p className="text-2xl font-bold mt-1">
             ${stats.totalEarnings.toLocaleString()}
           </p>
-          <p className="text-sm text-gray-500 mt-2">Lifetime earnings from fulfilled orders</p>
+          <p className="text-sm text-white/30 mt-2">Lifetime earnings from fulfilled orders</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-yellow-50 rounded-lg">
-              <Clock className="h-5 w-5 text-yellow-600" />
+            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+              <Clock className="h-5 w-5 text-white/60" />
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-500">Pending Payouts</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <h3 className="text-sm font-medium text-white/40">Pending Payouts</h3>
+          <p className="text-2xl font-bold mt-1">
             ${stats.pendingPayouts.toLocaleString()}
           </p>
-          <p className="text-sm text-gray-500 mt-2">Processing, typically 2-3 business days</p>
+          <p className="text-sm text-white/30 mt-2">Processing, typically 2-3 business days</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Wallet className="h-5 w-5 text-blue-600" />
+            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+              <Wallet className="h-5 w-5 text-white/60" />
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-500">Available Balance</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <h3 className="text-sm font-medium text-white/40">Available Balance</h3>
+          <p className="text-2xl font-bold mt-1">
             ${stats.availableBalance.toLocaleString()}
           </p>
-          <p className="text-sm text-gray-500 mt-2">Ready for next payout</p>
+          <p className="text-sm text-white/30 mt-2">Ready for next payout</p>
         </div>
       </div>
 
       {/* Payout History */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Payout History</h3>
+      <div className="bg-[#161413] border border-white/10 rounded-xl">
+        <div className="p-6 border-b border-white/5">
+          <h3 className="text-lg font-semibold">Payout History</h3>
         </div>
 
         {payoutHistory.length > 0 ? (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/5">
             {payoutHistory.map((payout) => (
-              <div key={payout.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <div key={payout.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                 <div className="flex items-center gap-4">
                   <div className={`p-2 rounded-full ${
-                    payout.status === 'paid' ? 'bg-green-100' :
-                    payout.status === 'pending' ? 'bg-yellow-100' : 'bg-red-100'
+                    payout.status === 'paid' ? 'bg-green-500/10' :
+                    payout.status === 'pending' ? 'bg-[#C9A227]/10' : 'bg-red-500/10'
                   }`}>
                     {payout.status === 'paid' ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <CheckCircle className="h-5 w-5 text-green-400" />
                     ) : payout.status === 'pending' ? (
-                      <Clock className="h-5 w-5 text-yellow-600" />
+                      <Clock className="h-5 w-5 text-[#C9A227]" />
                     ) : (
-                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      <AlertCircle className="h-5 w-5 text-red-400" />
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{payout.description}</p>
-                    <p className="text-sm text-gray-500">{new Date(payout.date).toLocaleDateString()}</p>
+                    <p className="font-medium">{payout.description}</p>
+                    <p className="text-sm text-white/40">{new Date(payout.date).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">${payout.amount.toLocaleString()}</p>
+                  <p className="font-semibold">${payout.amount.toLocaleString()}</p>
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    payout.status === 'paid' ? 'bg-green-100 text-green-700' :
-                    payout.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                    payout.status === 'paid' ? 'bg-green-500/10 text-green-400' :
+                    payout.status === 'pending' ? 'bg-[#C9A227]/10 text-[#C9A227]' : 'bg-red-500/10 text-red-400'
                   }`}>
                     {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
                   </span>
@@ -255,11 +249,11 @@ export default function PaymentsPage() {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="h-8 w-8 text-gray-400" />
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="h-8 w-8 text-white/20" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No payouts yet</h3>
-            <p className="text-gray-500 max-w-sm mx-auto">
+            <h3 className="text-lg font-medium mb-2">No payouts yet</h3>
+            <p className="text-white/40 max-w-sm mx-auto">
               {stripeConnected
                 ? "Your first payout will appear here once you have fulfilled orders."
                 : "Connect your Stripe account to start receiving payouts."}
@@ -269,34 +263,34 @@ export default function PaymentsPage() {
       </div>
 
       {/* How it works */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="font-semibold text-blue-900 mb-4">How Payments Work</h3>
+      <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
+        <h3 className="font-semibold mb-4">How Payments Work</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold">
+            <div className="flex-shrink-0 w-8 h-8 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-full flex items-center justify-center text-[#C9A227] font-semibold">
               1
             </div>
             <div>
-              <h4 className="font-medium text-blue-900">Customer Places Order</h4>
-              <p className="text-sm text-blue-700">Payment is authorized and held in escrow</p>
+              <h4 className="font-medium">Customer Places Order</h4>
+              <p className="text-sm text-white/40">Payment is authorized and held in escrow</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold">
+            <div className="flex-shrink-0 w-8 h-8 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-full flex items-center justify-center text-[#C9A227] font-semibold">
               2
             </div>
             <div>
-              <h4 className="font-medium text-blue-900">Order Fulfilled</h4>
-              <p className="text-sm text-blue-700">When price target is met, payment is captured</p>
+              <h4 className="font-medium">Order Fulfilled</h4>
+              <p className="text-sm text-white/40">When price target is met, payment is captured</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold">
+            <div className="flex-shrink-0 w-8 h-8 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-full flex items-center justify-center text-[#C9A227] font-semibold">
               3
             </div>
             <div>
-              <h4 className="font-medium text-blue-900">Payout Sent</h4>
-              <p className="text-sm text-blue-700">Funds transferred to your bank (2-3 days)</p>
+              <h4 className="font-medium">Payout Sent</h4>
+              <p className="text-sm text-white/40">Funds transferred to your bank (2-3 days)</p>
             </div>
           </div>
         </div>

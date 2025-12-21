@@ -15,8 +15,7 @@ import {
   User,
   LogOut,
   Package,
-  ArrowLeft,
-  ExternalLink
+  ArrowLeft
 } from 'lucide-react'
 
 const navigation = [
@@ -67,8 +66,8 @@ function DashboardLayoutContent({
 
   if (!isDemo && loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -81,20 +80,12 @@ function DashboardLayoutContent({
   const currentPage = navigation.find(item => item.href === pathname)?.name || 'Dashboard'
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white">
-      {/* Grain overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.015] z-50"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
+    <div className="min-h-screen bg-[#0C0A09] text-[#FAF9F6]">
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-40 w-56 bg-[#0f0f10] border-r border-white/5">
-        <div className="flex h-14 items-center px-5 border-b border-white/5">
+      <div className="fixed inset-y-0 left-0 z-40 w-56 bg-[#161413] border-r border-white/5">
+        <div className="flex h-16 items-center px-5 border-b border-white/5">
           <Logo />
-          <span className="ml-2 text-lg font-semibold tracking-tight">LIMINA</span>
+          <span className="ml-2 text-lg font-bold tracking-tight">LIMINA</span>
         </div>
 
         <nav className="mt-4 px-3">
@@ -106,13 +97,13 @@ function DashboardLayoutContent({
                 <Link
                   key={item.name}
                   href={href}
-                  className={`group flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-white/[0.08] text-white'
-                      : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-[#C9A227] text-[#0C0A09]'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <item.icon className={`h-4 w-4 ${isActive ? 'text-emerald-400' : 'text-white/40 group-hover:text-white/60'}`} />
+                  <item.icon className={`h-4 w-4 ${isActive ? 'text-[#0C0A09]' : 'text-white/40 group-hover:text-white/60'}`} />
                   {item.name}
                 </Link>
               )
@@ -123,8 +114,8 @@ function DashboardLayoutContent({
         {/* Bottom section */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="h-8 w-8 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-emerald-400" />
+            <div className="h-8 w-8 bg-white/5 border border-white/10 rounded-full flex items-center justify-center">
+              <User className="h-4 w-4 text-white/60" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
@@ -138,7 +129,7 @@ function DashboardLayoutContent({
           {isDemo ? (
             <Link
               href="/auth"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-emerald-500 text-black font-medium hover:bg-emerald-400 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-[#C9A227] text-[#0C0A09] font-bold hover:bg-[#D4AF37] rounded-lg transition-colors"
             >
               Get started
               <ArrowLeft className="w-3 h-3 rotate-180" />
@@ -156,19 +147,19 @@ function DashboardLayoutContent({
       </div>
 
       {/* Main content */}
-      <div className="pl-56">
+      <div className="pl-56 relative z-10">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="sticky top-0 z-30 bg-[#0C0A09]/80 backdrop-blur-xl border-b border-white/5">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-semibold tracking-tight">{currentPage}</h1>
+                <h1 className="text-xl font-bold tracking-tight">{currentPage}</h1>
               </div>
               <div className="flex items-center gap-4">
                 {isDemo && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs text-emerald-400 font-medium">Demo</span>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
+                    <span className="text-xs text-[#C9A227] font-semibold">Demo</span>
                   </div>
                 )}
                 <Link
@@ -194,8 +185,8 @@ function DashboardLayoutContent({
 
 function DashboardFallback() {
   return (
-    <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 }

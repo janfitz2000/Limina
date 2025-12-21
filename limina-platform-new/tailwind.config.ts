@@ -18,6 +18,9 @@ const config: Config = {
       fontFamily: {
         poppins: ['Poppins', 'sans-serif'],
       },
+      borderWidth: {
+        '3': '3px',
+      },
     },
   },
   plugins: [],
