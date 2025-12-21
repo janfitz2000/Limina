@@ -90,7 +90,19 @@ function DashboardOverviewContent() {
       return
     }
 
-    if (authLoading || !user || !user.merchant_id) return
+    if (authLoading) return
+
+    if (!user) {
+      setError('Please sign in to access the dashboard')
+      setLoading(false)
+      return
+    }
+
+    if (!user.merchant_id) {
+      setError('Your merchant profile is being set up. Please refresh in a moment.')
+      setLoading(false)
+      return
+    }
 
     const fetchData = async () => {
       try {
