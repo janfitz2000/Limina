@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect, Suspense, useMemo } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { supabase } from '@/lib/supabase-fixed'
+import { createClient } from '@/lib/supabase-browser'
 import {
   ShoppingCart,
   TrendingUp,
@@ -54,11 +54,14 @@ function DashboardOverviewContent() {
   const isDemo = searchParams.get('demo') === 'true'
   const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
+  const supabase = useMemo(() => createClient(), [])
   const [error, setError] = useState<string | null>(null)
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
+    console.log('Dashboard useEffect - authLoading:', authLoading, 'user:', user, 'isDemo:', isDemo)
+
     if (isDemo) {
       const demoOrders = DEMO_BUY_ORDERS.map(order => ({
         id: order.id,

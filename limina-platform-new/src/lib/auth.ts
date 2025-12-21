@@ -1,6 +1,9 @@
 // Real authentication using Supabase Auth
-import { supabase } from './supabase-fixed'
+import { createClient } from './supabase-browser'
 import { Database } from '@/types/database'
+
+// Get a fresh client instance for each operation
+const getSupabase = () => createClient()
 
 export type User = {
   id: string
@@ -15,8 +18,11 @@ export type MerchantProfile = Database['public']['Tables']['merchants']['Row']
 // Get current authenticated user
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
+    const supabase = getSupabase()
     const { data: { user }, error } = await supabase.auth.getUser()
-    
+
+    console.log('getCurrentUser - supabase.auth.getUser result:', { user: user?.id, error })
+
     if (error || !user) {
       return null
     }
@@ -54,8 +60,9 @@ export const getCurrentUser = async (): Promise<User | null> => {
 // Get full merchant profile
 export const getMerchantProfile = async (): Promise<MerchantProfile | null> => {
   try {
+    const supabase = getSupabase()
     const { data: { user }, error } = await supabase.auth.getUser()
-    
+
     if (error || !user) {
       return null
     }
@@ -112,6 +119,7 @@ export const requireMerchantAuth = async (): Promise<{ user: User; merchant: Mer
 // Sign out
 export const signOut = async (): Promise<void> => {
   try {
+    const supabase = getSupabase()
     const { error } = await supabase.auth.signOut()
     if (error) {
       console.error('Error signing out:', error)
@@ -133,8 +141,9 @@ export const signOut = async (): Promise<void> => {
 // Update merchant profile
 export const updateMerchantProfile = async (updates: Partial<MerchantProfile>): Promise<MerchantProfile | null> => {
   try {
+    const supabase = getSupabase()
     const { user } = await requireMerchantAuth()
-    
+
     const { data, error } = await supabase
       .from('merchants')
       .update(updates)
@@ -176,9 +185,11 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true
+    const supabase = getSupabase()
 
     // Get initial user
     getCurrentUser().then((user) => {
+      console.log('useAuth - getCurrentUser result:', user)
       if (mounted) {
         setUser(user)
         setLoading(false)
