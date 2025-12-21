@@ -3,18 +3,39 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { DEMO_ANALYTICS, DEMO_DEMAND_BY_PRODUCT } from '@/lib/demo-data'
+import { DEMO_ANALYTICS } from '@/lib/demo-data'
 import {
   TrendingUp,
   DollarSign,
-  ShoppingCart,
   Users,
   Target,
   ArrowUpRight,
-  Download,
-  BarChart3,
+  ArrowRight,
+  Zap,
   Package
 } from 'lucide-react'
+
+interface ProductPerformance {
+  product: {
+    id: string
+    title: string
+    current_price: number
+    image_url?: string
+  }
+  waitingCustomers: number
+  fulfilledOrders: number
+  potentialRevenue: number
+  capturedRevenue: number
+  avgDiscountRequested: number
+  conversionRate: number
+}
+
+interface PriceSensitivity {
+  discountPercent: number
+  targetPrice: number
+  currentPrice: number
+  productTitle: string
+}
 
 interface AnalyticsData {
   overview: {
@@ -24,25 +45,18 @@ interface AnalyticsData {
     totalRevenue: number
     averageOrderValue: number
     conversionRate: number
+    potentialRevenue: number
+    totalCustomers: number
   }
-  demandByPrice: Array<{
-    productId: string
-    title: string
-    currentPrice: number
-    demandByPrice: Array<{
-      price: number
-      orders: number
-      revenue: number
-    }>
+  demandCurve: Array<{
+    discountRange: string
+    customers: number
+    revenue: number
+    avgDiscount: number
   }>
-  recentActivity: Array<{
-    id: string
-    status: string
-    target_price: number
-    created_at: string
-    product_title?: string
-    customer_name?: string
-  }>
+  productPerformance: ProductPerformance[]
+  activityHeatmap: number[][]
+  priceSensitivity: PriceSensitivity[]
   weeklyTrend?: Array<{
     day: string
     orders: number
@@ -56,7 +70,11 @@ function AnalyticsContent() {
   const { user } = useAuth()
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState('30d')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     async function fetchAnalytics() {
@@ -101,118 +119,415 @@ function AnalyticsContent() {
     fulfilledOrders: 0,
     totalRevenue: 0,
     averageOrderValue: 0,
-    conversionRate: 0
+    conversionRate: 0,
+    potentialRevenue: 0,
+    totalCustomers: 0
   }
 
+  const maxPotentialRevenue = Math.max(
+    ...(analytics?.productPerformance?.map(p => p.potentialRevenue) || [1])
+  )
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const hours = Array.from({ length: 24 }, (_, i) => i)
+  const maxHeatmapValue = Math.max(
+    ...(analytics?.activityHeatmap?.flat() || [1])
+  )
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-white/40 text-sm">Performance insights and demand trends</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-[#C9A227]/50 outline-none"
-          >
-            <option value="7d">7 days</option>
-            <option value="30d">30 days</option>
-            <option value="90d">90 days</option>
-          </select>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-            <Download className="h-4 w-4" />
-            Export
-          </button>
+    <div className="space-y-8">
+      {/* Hero: Revenue Opportunity */}
+      <div
+        className={`relative overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        <div className="dashboard-card p-8">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#C9A227]/5 rounded-full blur-[100px] pointer-events-none" />
+
+          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <p className="text-[10px] font-semibold text-[#C9A227] uppercase tracking-widest mb-2">Revenue Opportunity</p>
+              <h2 className="text-4xl font-extrabold mb-2">
+                <span className="text-[#C9A227]">${overview.potentialRevenue.toLocaleString()}</span>
+              </h2>
+              <p className="text-white/40 mb-6">
+                from {overview.activeOrders} customers waiting to convert
+              </p>
+
+              <div className="flex items-center gap-6">
+                <div>
+                  <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Captured</p>
+                  <p className="text-2xl font-bold text-green-400">${overview.totalRevenue.toLocaleString()}</p>
+                </div>
+                <div className="h-12 w-px bg-white/10" />
+                <div>
+                  <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Conversion</p>
+                  <p className="text-2xl font-bold">{overview.conversionRate}%</p>
+                </div>
+                <div className="h-12 w-px bg-white/10" />
+                <div>
+                  <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Avg. Order</p>
+                  <p className="text-2xl font-bold">${overview.averageOrderValue}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue Gauge */}
+            <div className="flex justify-center">
+              <div className="relative w-48 h-48">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.05)"
+                    strokeWidth="8"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="url(#goldGradient)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(overview.totalRevenue / (overview.totalRevenue + overview.potentialRevenue)) * 251.2} 251.2`}
+                    className="transition-all duration-1000"
+                    style={{
+                      filter: 'drop-shadow(0 0 8px rgba(201, 162, 39, 0.5))'
+                    }}
+                  />
+                  <defs>
+                    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#C9A227" />
+                      <stop offset="100%" stopColor="#D4AF37" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Captured</p>
+                  <p className="text-2xl font-extrabold text-[#C9A227]">
+                    {Math.round((overview.totalRevenue / (overview.totalRevenue + overview.potentialRevenue)) * 100)}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="dashboard-card dashboard-card-featured p-5 dashboard-enter dashboard-enter-delay-1">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-semibold text-[#C9A227] uppercase tracking-widest">Revenue</p>
-            <span className="flex items-center text-xs text-[#C9A227]">
-              <ArrowUpRight className="w-3 h-3 mr-0.5" />
-              12%
-            </span>
+      {/* Product Performance Racing Bars */}
+      <div
+        className={`dashboard-card p-6 transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Product Performance</p>
+            <p className="text-xs text-white/40">Ranked by revenue potential</p>
           </div>
-          <p className="text-3xl font-extrabold text-[#C9A227] stat-number">${overview.totalRevenue.toLocaleString()}</p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="w-8 h-8 bg-[#C9A227]/10 flex items-center justify-center">
-              <DollarSign className="h-4 w-4 text-[#C9A227]" />
+          <Zap className="h-5 w-5 text-[#C9A227]" />
+        </div>
+
+        <div className="space-y-4">
+          {analytics?.productPerformance?.slice(0, 5).map((item, index) => (
+            <div key={item.product.id} className="group">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold text-white/20 w-4">{String(index + 1).padStart(2, '0')}</span>
+                  {item.product.image_url ? (
+                    <img
+                      src={item.product.image_url}
+                      alt={item.product.title}
+                      className="w-8 h-8 object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+                      <Package className="w-4 h-4 text-white/20" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-sm">{item.product.title}</p>
+                    <p className="text-xs text-white/40">{item.waitingCustomers} waiting</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-[#C9A227]">${item.potentialRevenue.toLocaleString()}</p>
+                  <p className="text-xs text-white/40">-{item.avgDiscountRequested}% avg</p>
+                </div>
+              </div>
+
+              {/* Racing bar */}
+              <div className="relative h-2 bg-white/5 overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#C9A227] to-[#D4AF37] transition-all duration-1000 ease-out group-hover:brightness-110"
+                  style={{
+                    width: mounted ? `${(item.potentialRevenue / maxPotentialRevenue) * 100}%` : '0%',
+                    transitionDelay: `${index * 100}ms`
+                  }}
+                />
+                {item.capturedRevenue > 0 && (
+                  <div
+                    className="absolute inset-y-0 left-0 bg-green-500"
+                    style={{
+                      width: `${(item.capturedRevenue / maxPotentialRevenue) * 100}%`
+                    }}
+                  />
+                )}
+              </div>
             </div>
-            <p className="text-xs text-white/40">Total earned</p>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4 mt-6 pt-4 border-t border-white/5 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-gradient-to-r from-[#C9A227] to-[#D4AF37]" />
+            <span className="text-white/40">Potential</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500" />
+            <span className="text-white/40">Captured</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Two Column: Price Sensitivity + Activity Heatmap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Price Sensitivity Visualization */}
+        <div
+          className={`dashboard-card p-6 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Price Sensitivity</p>
+              <p className="text-xs text-white/40">Discount distribution of waiting customers</p>
+            </div>
+            <Target className="h-5 w-5 text-white/20" />
+          </div>
+
+          {/* Dot visualization */}
+          <div className="relative h-32 mb-4">
+            <div className="absolute inset-0 flex items-end">
+              {analytics?.priceSensitivity?.map((item, i) => {
+                const xPos = (item.discountPercent / 25) * 100
+                const size = 8 + Math.random() * 4
+                return (
+                  <div
+                    key={i}
+                    className="absolute group cursor-pointer"
+                    style={{
+                      left: `${Math.min(xPos, 95)}%`,
+                      bottom: `${20 + Math.random() * 60}%`,
+                    }}
+                  >
+                    <div
+                      className="rounded-full bg-[#C9A227] transition-all duration-300 hover:scale-150 hover:bg-[#D4AF37]"
+                      style={{
+                        width: size,
+                        height: size,
+                        opacity: 0.6 + Math.random() * 0.4,
+                        animation: mounted ? `fadeIn 0.5s ease-out ${i * 50}ms forwards` : 'none',
+                      }}
+                    />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0C0A09] border border-white/10 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      {item.productTitle}: -{item.discountPercent}%
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* X-axis labels */}
+          <div className="flex justify-between text-[10px] text-white/30 uppercase tracking-wider border-t border-white/5 pt-3">
+            <span>0%</span>
+            <span>5%</span>
+            <span>10%</span>
+            <span>15%</span>
+            <span>20%+</span>
+          </div>
+
+          {/* Insight */}
+          <div className="mt-4 p-3 bg-[#C9A227]/5 border border-[#C9A227]/20">
+            <div className="flex items-start gap-2">
+              <ArrowRight className="w-4 h-4 text-[#C9A227] mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-white/60">
+                <span className="text-[#C9A227] font-semibold">Most customers</span> are asking for 5-15% off.
+                Consider targeted offers in this range to maximize conversions.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-2">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Orders</p>
-            <span className="flex items-center text-xs text-[#C9A227]">
-              <ArrowUpRight className="w-3 h-3 mr-0.5" />
-              8%
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold stat-number">{overview.totalOrders}</p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-              <ShoppingCart className="h-4 w-4 text-white/40" />
+        {/* Activity Heatmap */}
+        <div
+          className={`dashboard-card p-6 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Activity Patterns</p>
+              <p className="text-xs text-white/40">When customers submit orders</p>
             </div>
-            <p className="text-xs text-white/40">All time</p>
+            <TrendingUp className="h-5 w-5 text-white/20" />
+          </div>
+
+          {/* Heatmap grid */}
+          <div className="space-y-1">
+            {days.map((day, dayIndex) => (
+              <div key={day} className="flex items-center gap-1">
+                <span className="text-[10px] text-white/30 w-8 flex-shrink-0">{day}</span>
+                <div className="flex gap-px flex-1">
+                  {hours.filter((_, i) => i % 3 === 0).map((hour) => {
+                    const value = analytics?.activityHeatmap?.[dayIndex]?.[hour] || 0
+                    const intensity = maxHeatmapValue > 0 ? value / maxHeatmapValue : 0
+                    return (
+                      <div
+                        key={hour}
+                        className="flex-1 h-4 transition-colors hover:brightness-125 cursor-pointer group relative"
+                        style={{
+                          backgroundColor: intensity > 0
+                            ? `rgba(201, 162, 39, ${0.15 + intensity * 0.85})`
+                            : 'rgba(255, 255, 255, 0.02)'
+                        }}
+                      >
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-[#0C0A09] border border-white/10 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          {day} {hour}:00 - {value} orders
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* X-axis */}
+          <div className="flex ml-9 mt-2">
+            {['12am', '6am', '12pm', '6pm'].map((time, i) => (
+              <span key={time} className="flex-1 text-[10px] text-white/30">{time}</span>
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-end gap-2 mt-4 text-[10px] text-white/30">
+            <span>Less</span>
+            <div className="flex gap-px">
+              {[0.1, 0.3, 0.5, 0.7, 0.9].map((opacity) => (
+                <div
+                  key={opacity}
+                  className="w-3 h-3"
+                  style={{ backgroundColor: `rgba(201, 162, 39, ${opacity})` }}
+                />
+              ))}
+            </div>
+            <span>More</span>
           </div>
         </div>
+      </div>
 
-        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-3">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Conversion</p>
-            <span className="flex items-center text-xs text-[#C9A227]">
-              <ArrowUpRight className="w-3 h-3 mr-0.5" />
-              3%
-            </span>
+      {/* Demand Curve */}
+      <div
+        className={`dashboard-card p-6 transition-all duration-700 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Demand by Discount Level</p>
+            <p className="text-xs text-white/40">How many customers are waiting at each discount tier</p>
           </div>
-          <p className="text-3xl font-extrabold stat-number">{overview.conversionRate}%</p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-              <Target className="h-4 w-4 text-white/40" />
-            </div>
-            <p className="text-xs text-white/40">Success rate</p>
-          </div>
+          <Users className="h-5 w-5 text-white/20" />
         </div>
 
-        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Avg. Order</p>
-          </div>
-          <p className="text-3xl font-extrabold stat-number">${overview.averageOrderValue}</p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-white/40" />
+        {/* Stepped waterfall chart */}
+        <div className="flex items-end gap-2 h-48">
+          {analytics?.demandCurve?.map((tier, index) => {
+            const maxCustomers = Math.max(...(analytics.demandCurve?.map(t => t.customers) || [1]))
+            const height = (tier.customers / maxCustomers) * 100
+
+            return (
+              <div key={tier.discountRange} className="flex-1 flex flex-col items-center group">
+                <div className="w-full flex flex-col items-center relative">
+                  {/* Value label */}
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="px-2 py-1 bg-[#0C0A09] border border-[#C9A227]/30 text-xs whitespace-nowrap">
+                      <span className="text-[#C9A227] font-bold">{tier.customers}</span>
+                      <span className="text-white/40"> @ ${tier.revenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Bar */}
+                  <div
+                    className="w-full bg-gradient-to-t from-[#C9A227]/80 to-[#C9A227] transition-all duration-500 hover:from-[#D4AF37] hover:to-[#D4AF37] relative"
+                    style={{
+                      height: mounted ? `${Math.max(height, 8)}%` : '0%',
+                      transitionDelay: `${index * 100}ms`
+                    }}
+                  >
+                    {/* Customer count inside bar */}
+                    <span className="absolute inset-0 flex items-center justify-center text-[#0C0A09] font-bold text-sm">
+                      {tier.customers}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Label */}
+                <span className="text-[10px] text-white/40 mt-2 text-center">{tier.discountRange}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Insight */}
+        <div className="mt-6 p-4 bg-[#C9A227]/5 border border-[#C9A227]/20 flex items-center justify-between">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 text-[#C9A227]" />
             </div>
-            <p className="text-xs text-white/40">Per order value</p>
+            <div>
+              <p className="font-medium text-sm">Recommended Action</p>
+              <p className="text-xs text-white/50 mt-1">
+                Offering <span className="text-[#C9A227] font-semibold">10% discounts</span> could convert
+                the majority of waiting customers and capture an estimated
+                <span className="text-[#C9A227] font-semibold"> ${overview.potentialRevenue.toLocaleString()}</span> in revenue.
+              </p>
+            </div>
           </div>
+          <button className="px-4 py-2 bg-[#C9A227] text-[#0C0A09] font-bold text-sm hover:bg-[#D4AF37] transition-colors flex items-center gap-2">
+            Send Offers
+            <ArrowUpRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* Weekly Trend */}
       {analytics?.weeklyTrend && (
-        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-5">
-          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Weekly Trend</p>
-          <div className="flex items-end justify-between h-40 gap-2">
-            {analytics.weeklyTrend.map((day) => {
+        <div
+          className={`dashboard-card p-6 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-6">Weekly Order Trend</p>
+
+          <div className="flex items-end justify-between h-32 gap-3">
+            {analytics.weeklyTrend.map((day, index) => {
               const maxOrders = Math.max(...analytics.weeklyTrend!.map(d => d.orders))
               const height = maxOrders > 0 ? (day.orders / maxOrders) * 100 : 0
+
               return (
-                <div key={day.day} className="flex-1 flex flex-col items-center">
+                <div key={day.day} className="flex-1 flex flex-col items-center group">
                   <div className="w-full flex flex-col items-center">
-                    <span className="text-xs text-white/40 mb-1">{day.orders}</span>
+                    <span className="text-xs text-white/40 mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      ${day.revenue.toLocaleString()}
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-[#C9A227]/60 to-[#C9A227]/80 rounded-t transition-all hover:from-[#C9A227] hover:to-[#D4AF37]"
-                      style={{ height: `${Math.max(height, 10)}%` }}
+                      className="w-full bg-gradient-to-t from-[#C9A227]/60 to-[#C9A227]/80 transition-all duration-500 hover:from-[#C9A227] hover:to-[#D4AF37]"
+                      style={{
+                        height: mounted ? `${Math.max(height, 10)}%` : '0%',
+                        transitionDelay: `${index * 50}ms`
+                      }}
                     />
                   </div>
-                  <span className="text-xs text-white/40 mt-2">{day.day}</span>
+                  <div className="mt-3 text-center">
+                    <span className="text-xs text-white/40">{day.day}</span>
+                    <p className="text-sm font-bold">{day.orders}</p>
+                  </div>
                 </div>
               )
             })}
@@ -220,188 +535,12 @@ function AnalyticsContent() {
         </div>
       )}
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Order Breakdown */}
-        <div className="lg:col-span-2 dashboard-card p-5 dashboard-enter dashboard-enter-delay-6">
-          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Order Status</p>
-          <div className="space-y-4">
-            {[
-              { label: 'Active', value: overview.activeOrders, color: 'bg-[#C9A227]', percentage: overview.totalOrders > 0 ? (overview.activeOrders / overview.totalOrders * 100) : 0 },
-              { label: 'Fulfilled', value: overview.fulfilledOrders, color: 'bg-green-500', percentage: overview.totalOrders > 0 ? (overview.fulfilledOrders / overview.totalOrders * 100) : 0 },
-              { label: 'Other', value: Math.max(0, overview.totalOrders - overview.activeOrders - overview.fulfilledOrders), color: 'bg-white/20', percentage: overview.totalOrders > 0 ? ((overview.totalOrders - overview.activeOrders - overview.fulfilledOrders) / overview.totalOrders * 100) : 0 },
-            ].map((item) => (
-              <div key={item.label}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-white/60">{item.label}</span>
-                  <span className="font-medium">{item.value} ({item.percentage.toFixed(0)}%)</span>
-                </div>
-                <div className="w-full bg-white/5 rounded-full h-2">
-                  <div
-                    className={`${item.color} h-2 rounded-full transition-all`}
-                    style={{ width: `${item.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="dashboard-card p-5">
-          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Summary</p>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-white/40">Active orders</span>
-              <span className="font-semibold text-[#C9A227]">{overview.activeOrders}</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-white/40">Fulfilled</span>
-              <span className="font-semibold text-green-400">{overview.fulfilledOrders}</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-white/40">Total orders</span>
-              <span className="font-semibold">{overview.totalOrders}</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-white/40">Conversion</span>
-              <span className="font-semibold">{overview.conversionRate}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Demand by Product */}
-      <div className="dashboard-card p-5">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Price Demand Analysis</p>
-            <p className="text-xs text-white/40">Customer demand by price point</p>
-          </div>
-          <BarChart3 className="h-5 w-5 text-white/20" />
-        </div>
-
-        {isDemo ? (
-          <div className="space-y-4">
-            {DEMO_DEMAND_BY_PRODUCT.filter(p => p.totalWaiting > 0).map((item) => (
-              <div key={item.product.id} className="bg-white/[0.02] border border-white/5 rounded-lg p-4 hover:border-[#C9A227]/20 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    {item.product.image_url ? (
-                      <img
-                        src={item.product.image_url}
-                        alt={item.product.title}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-white/20" />
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-medium">{item.product.title}</h4>
-                      <p className="text-sm text-white/40">Current: ${item.product.current_price}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-[#C9A227]">{item.totalWaiting}</div>
-                    <div className="text-xs text-white/40">waiting</div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-white/30 uppercase tracking-wide">By price point</div>
-                  <div className="flex flex-wrap gap-2">
-                    {item.pricePoints.map((point) => (
-                      <div
-                        key={point.price}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg"
-                      >
-                        <span className="font-semibold text-[#C9A227]">${point.price}</span>
-                        <span className="text-white/30">-</span>
-                        <span className="flex items-center gap-1 text-white/60">
-                          <Users className="h-3 w-3" />
-                          {point.count}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-sm">
-                  <span className="text-white/40">Range: ${item.lowestAsk} - ${item.highestAsk}</span>
-                  <span className="font-medium text-[#C9A227]">${item.potentialRevenue.toLocaleString()} potential</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : analytics?.demandByPrice && analytics.demandByPrice.length > 0 ? (
-          <div className="space-y-4">
-            {analytics.demandByPrice.slice(0, 5).map((product) => (
-              <div key={product.productId} className="border-b border-white/5 pb-4 last:border-0">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">{product.title}</span>
-                  <span className="text-sm text-white/40">Current: ${product.currentPrice}</span>
-                </div>
-                {product.demandByPrice.length > 0 ? (
-                  <div className="flex gap-2 flex-wrap">
-                    {product.demandByPrice.map((point) => (
-                      <div
-                        key={point.price}
-                        className="px-3 py-1 bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] rounded-lg text-sm"
-                      >
-                        ${point.price}: {point.orders}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-white/30">No demand data yet</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-white/30 text-center py-8">No demand data available</p>
-        )}
-      </div>
-
-      {/* Recent Activity */}
-      <div className="dashboard-card p-5">
-        <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Recent Activity</p>
-        {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
-          <div className="space-y-2">
-            {analytics.recentActivity.slice(0, 8).map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-center justify-between py-3 px-3 bg-white/[0.02] rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.status === 'fulfilled' ? 'bg-green-400' :
-                    activity.status === 'monitoring' ? 'bg-[#C9A227]' : 'bg-white/30'
-                  }`} />
-                  <div>
-                    <span className="text-sm font-medium">
-                      {activity.product_title || `Order #${activity.id.slice(0, 8)}`}
-                    </span>
-                    {activity.customer_name && (
-                      <span className="text-sm text-white/40 ml-2">- {activity.customer_name}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-[#C9A227]">${activity.target_price}</span>
-                  <span className="text-xs text-white/30">
-                    {new Date(activity.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-white/30 text-center py-8">No recent activity</p>
-        )}
-      </div>
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   )
 }

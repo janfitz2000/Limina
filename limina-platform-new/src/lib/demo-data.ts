@@ -355,6 +355,80 @@ export const DEMO_STATS = {
   totalCustomers: new Set(DEMO_BUY_ORDERS.map(o => o.customer_id)).size,
 };
 
+// Calculate demand curve data (aggregated across all products)
+const demandCurveData = (() => {
+  const monitoringOrders = DEMO_BUY_ORDERS.filter(o => o.status === 'monitoring');
+  const discountBuckets: Record<string, { customers: number; revenue: number; avgDiscount: number }> = {};
+
+  monitoringOrders.forEach(order => {
+    const discountPercent = Math.round(((order.current_price - order.target_price) / order.current_price) * 100);
+    const bucket = `${Math.floor(discountPercent / 5) * 5}-${Math.floor(discountPercent / 5) * 5 + 5}%`;
+
+    if (!discountBuckets[bucket]) {
+      discountBuckets[bucket] = { customers: 0, revenue: 0, avgDiscount: 0 };
+    }
+    discountBuckets[bucket].customers++;
+    discountBuckets[bucket].revenue += order.target_price;
+    discountBuckets[bucket].avgDiscount = discountPercent;
+  });
+
+  return Object.entries(discountBuckets)
+    .map(([bucket, data]) => ({
+      discountRange: bucket,
+      customers: data.customers,
+      revenue: data.revenue,
+      avgDiscount: data.avgDiscount,
+    }))
+    .sort((a, b) => a.avgDiscount - b.avgDiscount);
+})();
+
+// Product performance data
+const productPerformance = DEMO_PRODUCTS.map(product => {
+  const orders = DEMO_BUY_ORDERS.filter(o => o.product_id === product.id);
+  const waiting = orders.filter(o => o.status === 'monitoring');
+  const fulfilled = orders.filter(o => o.status === 'fulfilled');
+  const potentialRevenue = waiting.reduce((sum, o) => sum + o.target_price, 0);
+  const capturedRevenue = fulfilled.reduce((sum, o) => sum + o.target_price, 0);
+  const avgDiscountRequested = waiting.length > 0
+    ? waiting.reduce((sum, o) => sum + ((product.current_price - o.target_price) / product.current_price) * 100, 0) / waiting.length
+    : 0;
+
+  return {
+    product,
+    waitingCustomers: waiting.length,
+    fulfilledOrders: fulfilled.length,
+    potentialRevenue,
+    capturedRevenue,
+    avgDiscountRequested: Math.round(avgDiscountRequested),
+    conversionRate: orders.length > 0 ? Math.round((fulfilled.length / orders.length) * 100) : 0,
+  };
+}).sort((a, b) => b.potentialRevenue - a.potentialRevenue);
+
+// Activity heatmap data (7 days x 24 hours)
+const activityHeatmap = (() => {
+  const heatmap: number[][] = Array(7).fill(null).map(() => Array(24).fill(0));
+
+  DEMO_BUY_ORDERS.forEach(order => {
+    const date = new Date(order.created_at);
+    const day = date.getDay();
+    const hour = date.getHours();
+    heatmap[day][hour]++;
+  });
+
+  return heatmap;
+})();
+
+// Price sensitivity distribution
+const priceSensitivity = (() => {
+  const monitoringOrders = DEMO_BUY_ORDERS.filter(o => o.status === 'monitoring');
+  return monitoringOrders.map(order => ({
+    discountPercent: Math.round(((order.current_price - order.target_price) / order.current_price) * 100),
+    targetPrice: order.target_price,
+    currentPrice: order.current_price,
+    productTitle: order.products.title,
+  }));
+})();
+
 // Analytics data for demo
 export const DEMO_ANALYTICS = {
   overview: {
@@ -364,7 +438,13 @@ export const DEMO_ANALYTICS = {
     totalRevenue: DEMO_STATS.totalRevenue,
     averageOrderValue: DEMO_STATS.averageOrderValue,
     conversionRate: DEMO_STATS.conversionRate,
+    potentialRevenue: DEMO_STATS.pendingRevenue,
+    totalCustomers: DEMO_STATS.totalCustomers,
   },
+  demandCurve: demandCurveData,
+  productPerformance,
+  activityHeatmap,
+  priceSensitivity,
   demandByPrice: DEMO_PRODUCTS.map(product => {
     const orders = DEMO_BUY_ORDERS.filter(o => o.product_id === product.id);
     const priceGroups: Record<number, { orders: number; revenue: number }> = {};
@@ -401,7 +481,6 @@ export const DEMO_ANALYTICS = {
       product_title: order.products.title,
       customer_name: order.customers.name,
     })),
-  // Weekly trend data
   weeklyTrend: [
     { day: 'Mon', orders: 2, revenue: 1798 },
     { day: 'Tue', orders: 3, revenue: 2547 },
