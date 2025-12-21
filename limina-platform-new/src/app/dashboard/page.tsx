@@ -175,52 +175,64 @@ function DashboardOverviewContent() {
       {/* Stats Grid */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-1">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <ShoppingCart className="h-5 w-5 text-white/60" />
-              </div>
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Total Orders</p>
               <span className="flex items-center text-xs text-[#C9A227]">
                 <ArrowUpRight className="w-3 h-3 mr-0.5" />
                 12%
               </span>
             </div>
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-sm text-white/40">Total orders</p>
-          </div>
-
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 text-[#C9A227]" />
+            <p className="text-3xl font-extrabold stat-number">{stats.total}</p>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+                <ShoppingCart className="h-4 w-4 text-white/40" />
               </div>
+              <p className="text-xs text-white/40">All time orders placed</p>
             </div>
-            <p className="text-2xl font-bold text-[#C9A227]">{stats.monitoring}</p>
-            <p className="text-sm text-white/40">Waiting customers</p>
           </div>
 
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+          <div className="dashboard-card dashboard-card-featured p-5 dashboard-enter dashboard-enter-delay-2">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-white/60" />
+              <p className="text-[10px] font-semibold text-[#C9A227] uppercase tracking-widest">Waiting</p>
+            </div>
+            <p className="text-3xl font-extrabold text-[#C9A227] stat-number">{stats.monitoring}</p>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="w-8 h-8 bg-[#C9A227]/10 flex items-center justify-center">
+                <Clock className="h-4 w-4 text-[#C9A227]" />
               </div>
+              <p className="text-xs text-white/40">Ready to convert</p>
+            </div>
+          </div>
+
+          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-3">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Revenue</p>
               <span className="flex items-center text-xs text-[#C9A227]">
                 <ArrowUpRight className="w-3 h-3 mr-0.5" />
                 8%
               </span>
             </div>
-            <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
-            <p className="text-sm text-white/40">Total revenue</p>
+            <p className="text-3xl font-extrabold stat-number">{formatCurrency(stats.totalRevenue)}</p>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-white/40" />
+              </div>
+              <p className="text-xs text-white/40">From fulfilled orders</p>
+            </div>
           </div>
 
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white/60" />
-              </div>
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Conversion</p>
             </div>
-            <p className="text-2xl font-bold">{stats.conversionRate}%</p>
-            <p className="text-sm text-white/40">Conversion rate</p>
+            <p className="text-3xl font-extrabold stat-number">{stats.conversionRate}%</p>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white/40" />
+              </div>
+              <p className="text-xs text-white/40">Success rate</p>
+            </div>
           </div>
         </div>
       )}
@@ -228,18 +240,18 @@ function DashboardOverviewContent() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Orders */}
-        <div className="lg:col-span-2 bg-[#161413] border border-white/10 rounded-xl">
+        <div className="lg:col-span-2 dashboard-card dashboard-enter dashboard-enter-delay-5">
           <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
             <div>
-              <h3 className="font-semibold">Recent orders</h3>
-              <p className="text-sm text-white/40">Latest customer demand</p>
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Recent Orders</p>
+              <p className="text-xs text-white/40">Latest customer demand</p>
             </div>
             <Link
               href={isDemo ? '/dashboard/orders?demo=true' : '/dashboard/orders'}
-              className="text-sm text-white/50 hover:text-white flex items-center gap-1 transition-colors"
+              className="text-xs text-white/40 hover:text-[#C9A227] flex items-center gap-1 transition-colors uppercase tracking-wider font-medium"
             >
               View all
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
 
@@ -293,8 +305,8 @@ function DashboardOverviewContent() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
-            <h3 className="font-semibold mb-4">Quick actions</h3>
+          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-6">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Quick Actions</p>
             <div className="space-y-2">
               <Link
                 href={isDemo ? '/dashboard/orders?demo=true' : '/dashboard/orders'}
@@ -339,8 +351,8 @@ function DashboardOverviewContent() {
           </div>
 
           {/* Integration Status */}
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
-            <h3 className="font-semibold mb-4">Integration</h3>
+          <div className="dashboard-card p-5">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Integration</p>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -360,8 +372,8 @@ function DashboardOverviewContent() {
           </div>
 
           {/* Today */}
-          <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
-            <h3 className="font-semibold mb-4">Today</h3>
+          <div className="dashboard-card p-5">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Today</p>
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-white/40">New orders</span>

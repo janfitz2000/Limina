@@ -167,50 +167,56 @@ export default function PaymentsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-[#C9A227]" />
-            </div>
+        <div className="dashboard-card dashboard-card-featured p-6 dashboard-enter dashboard-enter-delay-1">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-semibold text-[#C9A227] uppercase tracking-widest">Total Earnings</p>
           </div>
-          <h3 className="text-sm font-medium text-white/40">Total Earnings</h3>
-          <p className="text-2xl font-bold mt-1">
+          <p className="text-3xl font-extrabold text-[#C9A227] stat-number">
             ${stats.totalEarnings.toLocaleString()}
           </p>
-          <p className="text-sm text-white/30 mt-2">Lifetime earnings from fulfilled orders</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-[#C9A227]/10 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-[#C9A227]" />
+            </div>
+            <p className="text-xs text-white/40">Lifetime from fulfilled orders</p>
+          </div>
         </div>
 
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-white/60" />
-            </div>
+        <div className="dashboard-card p-6 dashboard-enter dashboard-enter-delay-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Pending</p>
           </div>
-          <h3 className="text-sm font-medium text-white/40">Pending Payouts</h3>
-          <p className="text-2xl font-bold mt-1">
+          <p className="text-3xl font-extrabold stat-number">
             ${stats.pendingPayouts.toLocaleString()}
           </p>
-          <p className="text-sm text-white/30 mt-2">Processing, typically 2-3 business days</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-white/40" />
+            </div>
+            <p className="text-xs text-white/40">Processing (2-3 days)</p>
+          </div>
         </div>
 
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-              <Wallet className="h-5 w-5 text-white/60" />
-            </div>
+        <div className="dashboard-card p-6 dashboard-enter dashboard-enter-delay-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Available</p>
           </div>
-          <h3 className="text-sm font-medium text-white/40">Available Balance</h3>
-          <p className="text-2xl font-bold mt-1">
+          <p className="text-3xl font-extrabold stat-number">
             ${stats.availableBalance.toLocaleString()}
           </p>
-          <p className="text-sm text-white/30 mt-2">Ready for next payout</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-white/40" />
+            </div>
+            <p className="text-xs text-white/40">Ready for payout</p>
+          </div>
         </div>
       </div>
 
       {/* Payout History */}
-      <div className="bg-[#161413] border border-white/10 rounded-xl">
+      <div className="dashboard-card dashboard-enter dashboard-enter-delay-4">
         <div className="p-6 border-b border-white/5">
-          <h3 className="text-lg font-semibold">Payout History</h3>
+          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Payout History</p>
         </div>
 
         {payoutHistory.length > 0 ? (
@@ -263,8 +269,8 @@ export default function PaymentsPage() {
       </div>
 
       {/* How it works */}
-      <div className="bg-[#161413] border border-white/10 rounded-xl p-6">
-        <h3 className="font-semibold mb-4">How Payments Work</h3>
+      <div className="dashboard-card p-6 dashboard-enter dashboard-enter-delay-5">
+        <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">How Payments Work</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex gap-3">
             <div className="flex-shrink-0 w-8 h-8 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-full flex items-center justify-center text-[#C9A227] font-semibold">

@@ -19,13 +19,13 @@ import {
 } from 'lucide-react'
 
 const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { name: 'Products', href: '/dashboard/products', icon: Package },
-  { name: 'Stores', href: '/dashboard/stores', icon: Store },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, num: '01' },
+  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart, num: '02' },
+  { name: 'Products', href: '/dashboard/products', icon: Package, num: '03' },
+  { name: 'Stores', href: '/dashboard/stores', icon: Store, num: '04' },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, num: '05' },
+  { name: 'Payments', href: '/dashboard/payments', icon: CreditCard, num: '06' },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings, num: '07' },
 ]
 
 function DashboardLayoutContent({
@@ -88,23 +88,30 @@ function DashboardLayoutContent({
           <span className="ml-2 text-lg font-bold tracking-tight">LIMINA</span>
         </div>
 
-        <nav className="mt-4 px-3">
-          <div className="space-y-0.5">
-            {navigation.map((item) => {
+        <nav className="mt-6 px-3">
+          <div className="space-y-1">
+            {navigation.map((item, index) => {
               const isActive = pathname === item.href
               const href = isDemo ? `${item.href}?demo=true` : item.href
               return (
                 <Link
                   key={item.name}
                   href={href}
-                  className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-[#C9A227] text-[#0C0A09]'
-                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                      : 'text-white/50 hover:text-white hover:bg-white/[0.03]'
                   }`}
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
+                  <span className={`text-[10px] font-semibold tracking-wider ${isActive ? 'text-[#0C0A09]/60' : 'text-white/20 group-hover:text-[#C9A227]'}`}>
+                    {item.num}
+                  </span>
                   <item.icon className={`h-4 w-4 ${isActive ? 'text-[#0C0A09]' : 'text-white/40 group-hover:text-white/60'}`} />
-                  {item.name}
+                  <span className="flex-1">{item.name}</span>
+                  {isActive && (
+                    <div className="w-1.5 h-1.5 bg-[#0C0A09] rounded-full" />
+                  )}
                 </Link>
               )
             })}
@@ -146,6 +153,9 @@ function DashboardLayoutContent({
         </div>
       </div>
 
+      {/* Background glow */}
+      <div className="dashboard-bg-glow" />
+
       {/* Main content */}
       <div className="pl-56 relative z-10">
         {/* Top bar */}
@@ -153,6 +163,7 @@ function DashboardLayoutContent({
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-0.5">Dashboard</p>
                 <h1 className="text-xl font-bold tracking-tight">{currentPage}</h1>
               </div>
               <div className="flex items-center gap-4">

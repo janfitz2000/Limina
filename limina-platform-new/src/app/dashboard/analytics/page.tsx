@@ -130,63 +130,75 @@ function AnalyticsContent() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+        <div className="dashboard-card dashboard-card-featured p-5 dashboard-enter dashboard-enter-delay-1">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-[#C9A227]" />
-            </div>
+            <p className="text-[10px] font-semibold text-[#C9A227] uppercase tracking-widest">Revenue</p>
             <span className="flex items-center text-xs text-[#C9A227]">
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
               12%
             </span>
           </div>
-          <p className="text-2xl font-bold">${overview.totalRevenue.toLocaleString()}</p>
-          <p className="text-sm text-white/40">Total revenue</p>
+          <p className="text-3xl font-extrabold text-[#C9A227] stat-number">${overview.totalRevenue.toLocaleString()}</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-[#C9A227]/10 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-[#C9A227]" />
+            </div>
+            <p className="text-xs text-white/40">Total earned</p>
+          </div>
         </div>
 
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-2">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-              <ShoppingCart className="h-5 w-5 text-white/60" />
-            </div>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Orders</p>
             <span className="flex items-center text-xs text-[#C9A227]">
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
               8%
             </span>
           </div>
-          <p className="text-2xl font-bold">{overview.totalOrders}</p>
-          <p className="text-sm text-white/40">Total orders</p>
+          <p className="text-3xl font-extrabold stat-number">{overview.totalOrders}</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+              <ShoppingCart className="h-4 w-4 text-white/40" />
+            </div>
+            <p className="text-xs text-white/40">All time</p>
+          </div>
         </div>
 
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-3">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-              <Target className="h-5 w-5 text-white/60" />
-            </div>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Conversion</p>
             <span className="flex items-center text-xs text-[#C9A227]">
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
               3%
             </span>
           </div>
-          <p className="text-2xl font-bold">{overview.conversionRate}%</p>
-          <p className="text-sm text-white/40">Conversion rate</p>
+          <p className="text-3xl font-extrabold stat-number">{overview.conversionRate}%</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+              <Target className="h-4 w-4 text-white/40" />
+            </div>
+            <p className="text-xs text-white/40">Success rate</p>
+          </div>
         </div>
 
-        <div className="bg-[#161413] border border-white/10 rounded-xl p-5">
+        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white/60" />
-            </div>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Avg. Order</p>
           </div>
-          <p className="text-2xl font-bold">${overview.averageOrderValue}</p>
-          <p className="text-sm text-white/40">Avg. order value</p>
+          <p className="text-3xl font-extrabold stat-number">${overview.averageOrderValue}</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-white/40" />
+            </div>
+            <p className="text-xs text-white/40">Per order value</p>
+          </div>
         </div>
       </div>
 
       {/* Weekly Trend */}
       {analytics?.weeklyTrend && (
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Weekly trend</h3>
+        <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-5">
+          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Weekly Trend</p>
           <div className="flex items-end justify-between h-40 gap-2">
             {analytics.weeklyTrend.map((day) => {
               const maxOrders = Math.max(...analytics.weeklyTrend!.map(d => d.orders))
@@ -211,8 +223,8 @@ function AnalyticsContent() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Order Breakdown */}
-        <div className="lg:col-span-2 bg-white/[0.02] border border-white/5 rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Order status</h3>
+        <div className="lg:col-span-2 dashboard-card p-5 dashboard-enter dashboard-enter-delay-6">
+          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Order Status</p>
           <div className="space-y-4">
             {[
               { label: 'Active', value: overview.activeOrders, color: 'bg-[#C9A227]', percentage: overview.totalOrders > 0 ? (overview.activeOrders / overview.totalOrders * 100) : 0 },
@@ -236,8 +248,8 @@ function AnalyticsContent() {
         </div>
 
         {/* Quick Stats */}
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Summary</h3>
+        <div className="dashboard-card p-5">
+          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Summary</p>
           <div className="space-y-4">
             <div className="flex items-center justify-between py-2 border-b border-white/5">
               <span className="text-white/40">Active orders</span>
@@ -260,11 +272,11 @@ function AnalyticsContent() {
       </div>
 
       {/* Demand by Product */}
-      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+      <div className="dashboard-card p-5">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="font-semibold">Price demand analysis</h3>
-            <p className="text-sm text-white/40 mt-1">Customer demand by price point</p>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-1">Price Demand Analysis</p>
+            <p className="text-xs text-white/40">Customer demand by price point</p>
           </div>
           <BarChart3 className="h-5 w-5 text-white/20" />
         </div>
@@ -354,8 +366,8 @@ function AnalyticsContent() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
-        <h3 className="font-semibold mb-4">Recent activity</h3>
+      <div className="dashboard-card p-5">
+        <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Recent Activity</p>
         {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
           <div className="space-y-2">
             {analytics.recentActivity.slice(0, 8).map((activity) => (
