@@ -55,8 +55,8 @@ export default function LandingPage() {
 
   const demandData = [
     { price: 949, customers: 3, names: ['Alex', 'Jordan', 'Sam'] },
-    { price: 899, customers: 7, names: ['Chris', 'Morgan', 'Taylor', 'Casey', 'Riley', 'Quinn', 'Avery'] },
-    { price: 849, customers: 5, names: ['Drew', 'Blake', 'Sage', 'River', 'Skyler'] },
+    { price: 899, customers: 5, names: ['Chris', 'Morgan', 'Taylor', 'Casey', 'Riley'] },
+    { price: 849, customers: 4, names: ['Drew', 'Blake', 'Sage', 'River'] },
     { price: 799, customers: 2, names: ['Jamie', 'Reese'] },
   ]
 
@@ -211,12 +211,12 @@ export default function LandingPage() {
                         onMouseLeave={() => setActivePrice(null)}
                       >
                         {/* Customer stack - fixed height container with bottom-aligned dots */}
-                        <div className="h-52 relative overflow-hidden">
-                          <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-1">
+                        <div className="h-44 relative overflow-hidden">
+                          <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-1.5">
                             {tier.names.map((name, i) => (
                               <div
                                 key={name}
-                                className={`customer-dot w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
+                                className={`customer-dot w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
                                   activePrice === tier.price
                                     ? 'bg-[#C9A227] text-[#0C0A09]'
                                     : 'bg-white/10 text-white/60 hover:bg-white/20'
