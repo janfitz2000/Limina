@@ -15,7 +15,8 @@ import {
   User,
   LogOut,
   Package,
-  ArrowLeft
+  ArrowLeft,
+  Code
 } from 'lucide-react'
 
 const navigation = [
@@ -25,7 +26,8 @@ const navigation = [
   { name: 'Stores', href: '/dashboard/stores', icon: Store, num: '04' },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, num: '05' },
   { name: 'Payments', href: '/dashboard/payments', icon: CreditCard, num: '06' },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings, num: '07' },
+  { name: 'Embed', href: '/dashboard/embed', icon: Code, num: '07' },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings, num: '08' },
 ]
 
 function DashboardLayoutContent({

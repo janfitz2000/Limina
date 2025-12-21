@@ -198,6 +198,9 @@ async function handleCallback(request: NextRequest) {
     // Set up webhooks for the store
     await setupShopifyWebhooks(shop, tokenData.access_token)
 
+    // Trigger initial product sync
+    await syncShopifyProducts(shop, tokenData.access_token, oauthState.merchant_id)
+
     // Clean up OAuth state
     await supabase
       .from('oauth_states')
@@ -213,6 +216,68 @@ async function handleCallback(request: NextRequest) {
     return NextResponse.redirect(
       `${APP_URL}/dashboard/settings?error=shopify_connection_failed`
     )
+  }
+}
+
+async function syncShopifyProducts(shop: string, accessToken: string, merchantId: string) {
+  try {
+    const response = await fetch(`https://${shop}/admin/api/2024-01/products.json`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+      },
+    })
+
+    if (!response.ok) {
+      console.error('Failed to fetch products from Shopify')
+      return
+    }
+
+    const data = await response.json()
+    const products = data.products || []
+
+    // Get shop info for currency
+    const shopResponse = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+      },
+    })
+    const shopData = await shopResponse.json()
+    const currency = shopData.shop?.currency || 'GBP'
+
+    let synced = 0
+    for (const shopifyProduct of products) {
+      try {
+        const price = parseFloat(shopifyProduct.variants[0]?.price || '0')
+
+        const productData = {
+          merchant_id: merchantId,
+          shopify_product_id: shopifyProduct.id.toString(),
+          title: shopifyProduct.title,
+          description: shopifyProduct.body_html || '',
+          price: price,
+          current_price: price,
+          currency: currency,
+          image_url: shopifyProduct.images[0]?.src || null,
+          handle: shopifyProduct.handle
+        }
+
+        // Upsert product
+        const { error } = await supabase
+          .from('products')
+          .upsert(productData, {
+            onConflict: 'merchant_id,shopify_product_id',
+            ignoreDuplicates: false
+          })
+
+        if (!error) synced++
+      } catch (e) {
+        console.error(`Error syncing product ${shopifyProduct.title}:`, e)
+      }
+    }
+
+    console.log(`Synced ${synced} products from Shopify`)
+  } catch (error) {
+    console.error('Error syncing Shopify products:', error)
   }
 }
 
