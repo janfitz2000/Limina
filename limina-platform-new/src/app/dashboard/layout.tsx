@@ -47,10 +47,8 @@ function DashboardLayoutContent({
   }, [])
 
   useEffect(() => {
-    if (isDemo) return
-    if (!loading && (!user || user.role !== 'merchant')) {
-      router.push('/auth')
-    }
+    // Removed redirect to /auth for non-merchants to avoid redirect loops
+    // The layout now shows appropriate messages for these cases
   }, [user, loading, router, isDemo])
 
   const handleSignOut = async () => {
@@ -74,8 +72,39 @@ function DashboardLayoutContent({
     )
   }
 
-  if (!isDemo && (!user || user.role !== 'merchant')) {
-    return null
+  if (!isDemo && !user) {
+    return (
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-white/50 mb-4">Please sign in to access the dashboard</p>
+          <a href="/auth" className="px-4 py-2 bg-[#C9A227] text-[#0C0A09] rounded-lg font-bold hover:bg-[#D4AF37] transition-colors">
+            Sign in
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isDemo && user && user.role !== 'merchant') {
+    return (
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <p className="text-white/50 mb-4">Your merchant profile is being set up. This may take a moment.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[#C9A227] text-[#0C0A09] rounded-lg font-bold hover:bg-[#D4AF37] transition-colors mr-2"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="px-4 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const displayUser = isDemo ? { name: 'Demo Merchant', email: 'demo@limina.io' } : user
