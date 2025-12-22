@@ -13,7 +13,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { buyOrderId, sendEmail = true } = body;
+    const { buyOrderId, sendEmail = true, offerPrice } = body;
 
     if (!buyOrderId) {
       return NextResponse.json(
@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use merchant's offer price if provided, otherwise use customer's target price
+    const finalOfferPrice = offerPrice !== undefined ? Number(offerPrice) : buyOrder.target_price;
+
     // Generate the discount code
     const discountCode = await discountCodeService.createDiscountCode({
       buyOrderId: buyOrder.id,
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
       customerId: buyOrder.customer_id,
       productId: buyOrder.product_id,
       storeId: buyOrder.store_id,
-      targetPrice: buyOrder.target_price,
+      targetPrice: finalOfferPrice,
       originalPrice: buyOrder.products.current_price,
       currency: buyOrder.currency,
       expiresInDays: 30,
@@ -95,7 +98,7 @@ export async function POST(request: NextRequest) {
           discountCode: discountCode.code,
           discountPercentage: discountCode.discountValue,
           originalPrice: buyOrder.products.current_price,
-          discountedPrice: buyOrder.target_price,
+          discountedPrice: finalOfferPrice,
           currency: buyOrder.currency,
           expiresAt: discountCode.expiresAt,
         });

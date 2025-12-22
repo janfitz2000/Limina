@@ -39,17 +39,25 @@ function DashboardLayoutContent({
   const router = useRouter()
   const searchParams = useSearchParams()
   const isDemo = searchParams.get('demo') === 'true'
-  const { user, loading } = useAuth()
+  const { user, loading, refreshUser } = useAuth()
   const [mounted, setMounted] = useState(false)
+  const [autoRefreshCount, setAutoRefreshCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Auto-refresh for non-merchant users (race condition after registration)
   useEffect(() => {
-    // Removed redirect to /auth for non-merchants to avoid redirect loops
-    // The layout now shows appropriate messages for these cases
-  }, [user, loading, router, isDemo])
+    if (isDemo || loading || !user) return
+    if (user.role !== 'merchant' && autoRefreshCount < 3) {
+      const timer = setTimeout(() => {
+        setAutoRefreshCount(prev => prev + 1)
+        refreshUser()
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [user, loading, isDemo, autoRefreshCount, refreshUser])
 
   const handleSignOut = async () => {
     if (!confirm('Are you sure you want to sign out?')) {
@@ -86,6 +94,18 @@ function DashboardLayoutContent({
   }
 
   if (!isDemo && user && user.role !== 'merchant') {
+    // Still auto-refreshing - show loading spinner
+    if (autoRefreshCount < 3) {
+      return (
+        <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-white/40 text-sm">Setting up your merchant profile...</p>
+          </div>
+        </div>
+      )
+    }
+    // Exhausted retries - show manual options
     return (
       <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
         <div className="text-center max-w-md">

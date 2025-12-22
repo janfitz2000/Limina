@@ -17,6 +17,7 @@ import {
 import { DEMO_BUY_ORDERS, DEMO_PRODUCTS } from '@/lib/demo-data'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase-fixed'
+import { SendOfferModal } from '@/components/SendOfferModal'
 
 interface Product {
   id: string
@@ -66,29 +67,47 @@ function OrdersPageContent() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('monitoring')
-  const [sendingDiscount, setSendingDiscount] = useState<string | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<BuyOrder | null>(null)
+  const [showOfferModal, setShowOfferModal] = useState(false)
 
-  const handleSendDiscount = async (orderId: string, customerEmail: string, productTitle: string, targetPrice: number) => {
+  const openOfferModal = (order: BuyOrder) => {
+    setSelectedOrder(order)
+    setShowOfferModal(true)
+  }
+
+  const closeOfferModal = () => {
+    setShowOfferModal(false)
+    setSelectedOrder(null)
+  }
+
+  const handleSendOffer = async (offerPrice: number) => {
+    if (!selectedOrder) return
+
     if (isDemo) {
-      alert(`Demo: Would send discount to ${customerEmail} for ${productTitle} at $${targetPrice}`)
+      alert(`Demo: Would send offer of $${offerPrice} to ${selectedOrder.customers?.email}`)
       return
     }
 
-    try {
-      setSendingDiscount(orderId)
-      const response = await fetch('/api/discount-codes/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buyOrderId: orderId, sendEmail: true })
+    const response = await fetch('/api/discount-codes/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        buyOrderId: selectedOrder.id,
+        sendEmail: true,
+        offerPrice
       })
-      const data = await response.json()
-      if (response.ok && data.success) {
-        alert(data.emailSent ? `Discount sent to ${customerEmail}!` : `Code generated: ${data.discountCode.code}`)
-      }
-    } catch (err) {
-      console.error('Error:', err)
-    } finally {
-      setSendingDiscount(null)
+    })
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send offer')
+    }
+
+    if (data.success) {
+      const message = data.emailSent
+        ? `Offer sent to ${selectedOrder.customers?.email}!`
+        : `Code generated: ${data.discountCode.code}`
+      alert(message)
     }
   }
 
@@ -387,21 +406,14 @@ function OrdersPageContent() {
                                 <p className="text-xs text-white/30">{formatDate(order.created_at)}</p>
                               </div>
                               <button
-                                className="flex items-center gap-2 px-4 py-2 bg-[#C9A227] text-[#0C0A09] rounded-lg text-sm font-medium hover:bg-[#D4AF37] transition-colors disabled:opacity-50"
-                                disabled={sendingDiscount === order.id}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#C9A227] text-[#0C0A09] rounded-lg text-sm font-medium hover:bg-[#D4AF37] transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  handleSendDiscount(order.id, order.customers?.email || '', order.products?.title || '', order.target_price)
+                                  openOfferModal(order)
                                 }}
                               >
-                                {sendingDiscount === order.id ? (
-                                  <div className="w-4 h-4 border-2 border-[#0C0A09] border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <>
-                                    <Tag className="w-4 h-4" />
-                                    Send offer
-                                  </>
-                                )}
+                                <Tag className="w-4 h-4" />
+                                Send offer
                               </button>
                             </div>
                           </div>
@@ -469,18 +481,11 @@ function OrdersPageContent() {
                     <td className="px-6 py-4">
                       {order.status === 'monitoring' && (
                         <button
-                          className="flex items-center gap-1 px-3 py-1.5 bg-[#C9A227] text-[#0C0A09] text-xs font-medium rounded hover:bg-[#D4AF37] transition-colors disabled:opacity-50"
-                          disabled={sendingDiscount === order.id}
-                          onClick={() => handleSendDiscount(order.id, order.customers?.email || '', order.products?.title || '', order.target_price)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-[#C9A227] text-[#0C0A09] text-xs font-medium rounded hover:bg-[#D4AF37] transition-colors"
+                          onClick={() => openOfferModal(order)}
                         >
-                          {sendingDiscount === order.id ? (
-                            <div className="w-3 h-3 border-2 border-[#0C0A09] border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <>
-                              <Tag className="w-3 h-3" />
-                              Send offer
-                            </>
-                          )}
+                          <Tag className="w-3 h-3" />
+                          Send offer
                         </button>
                       )}
                     </td>
@@ -493,6 +498,24 @@ function OrdersPageContent() {
             )}
           </div>
         </div>
+      )}
+
+      {selectedOrder && (
+        <SendOfferModal
+          isOpen={showOfferModal}
+          onClose={closeOfferModal}
+          onSend={handleSendOffer}
+          order={{
+            id: selectedOrder.id,
+            customerName: selectedOrder.customers?.name || 'Customer',
+            customerEmail: selectedOrder.customers?.email || '',
+            productTitle: selectedOrder.products?.title || 'Product',
+            productImage: selectedOrder.products?.image_url,
+            targetPrice: selectedOrder.target_price,
+            currentPrice: selectedOrder.products?.current_price || selectedOrder.current_price,
+            currency: selectedOrder.products?.currency || 'USD'
+          }}
+        />
       )}
     </div>
   )

@@ -4,6 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase-fixed'
 
 export async function POST(request: NextRequest) {
   try {
+    // Log environment check
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    console.log('Register API - Supabase URL:', supabaseUrl, 'Has Service Key:', hasServiceKey)
+
     const body = await request.json()
     const { 
       email, 

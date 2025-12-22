@@ -15,20 +15,21 @@ export type User = {
 
 export type MerchantProfile = Database['public']['Tables']['merchants']['Row']
 
-// Get current authenticated user
-export const getCurrentUser = async (): Promise<User | null> => {
+// Get current authenticated user with retry logic for race conditions
+export const getCurrentUser = async (retryCount = 0): Promise<User | null> => {
+  const MAX_RETRIES = 5
+  const RETRY_DELAY_MS = 500
+
   try {
     const supabase = getSupabase()
     const { data: { user }, error } = await supabase.auth.getUser()
-
-    console.log('getCurrentUser - supabase.auth.getUser result:', { user: user?.id, error })
 
     if (error || !user) {
       return null
     }
 
     // Get merchant profile if user is a merchant
-    const { data: merchant } = await supabase
+    const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
       .select('*')
       .eq('user_id', user.id)
@@ -44,7 +45,16 @@ export const getCurrentUser = async (): Promise<User | null> => {
       }
     }
 
-    // Default to customer role if no merchant profile
+    // If user exists but no merchant profile found, retry with backoff
+    // This handles race condition after registration where merchant profile
+    // might not be immediately visible due to RLS/replication timing
+    if (!merchant && retryCount < MAX_RETRIES) {
+      const delay = RETRY_DELAY_MS * Math.pow(1.5, retryCount)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return getCurrentUser(retryCount + 1)
+    }
+
+    // Default to customer role if no merchant profile after retries
     return {
       id: user.id,
       email: user.email!,
@@ -177,21 +187,33 @@ export const completeOnboarding = async (): Promise<boolean> => {
 }
 
 // React Hook for authentication
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const refreshUser = useCallback(async () => {
+    setLoading(true)
+    try {
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
+    } catch (error) {
+      console.error('Error refreshing user:', error)
+      setUser(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     let mounted = true
     const supabase = getSupabase()
 
-    // Get initial user
-    getCurrentUser().then((user) => {
-      console.log('useAuth - getCurrentUser result:', user)
+    // Get initial user with retry logic built-in
+    getCurrentUser().then((currentUser) => {
       if (mounted) {
-        setUser(user)
+        setUser(currentUser)
         setLoading(false)
       }
     })
@@ -201,20 +223,26 @@ export function useAuth() {
       async (event, session) => {
         if (!mounted) return
 
-        console.log('Auth state change:', event, session?.user?.id)
-        
         if (event === 'SIGNED_OUT' || !session?.user) {
           setUser(null)
           setLoading(false)
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+          // Small delay to ensure session is fully established
+          await new Promise(resolve => setTimeout(resolve, 100))
           try {
-            const user = await getCurrentUser()
-            setUser(user)
+            const currentUser = await getCurrentUser()
+            if (mounted) {
+              setUser(currentUser)
+            }
           } catch (error) {
             console.error('Error getting user after auth change:', error)
-            setUser(null)
+            if (mounted) {
+              setUser(null)
+            }
           }
-          setLoading(false)
+          if (mounted) {
+            setLoading(false)
+          }
         }
       }
     )
@@ -230,6 +258,7 @@ export function useAuth() {
     loading,
     isMerchant: user?.role === 'merchant',
     isCustomer: user?.role === 'customer',
-    signOut
+    signOut,
+    refreshUser
   }
 }

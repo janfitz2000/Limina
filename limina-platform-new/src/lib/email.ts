@@ -18,8 +18,18 @@ function getResend(): Resend {
   return resendClient;
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Limina <hello@limina.com>';
-const REPLY_TO_EMAIL = process.env.RESEND_REPLY_TO_EMAIL || 'support@limina.com';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Limina <hello@limina.io>';
+const REPLY_TO_EMAIL = process.env.RESEND_REPLY_TO_EMAIL || 'support@limina.io';
+
+const BRAND_COLORS = {
+  background: '#0C0A09',
+  cardBg: '#161413',
+  gold: '#C9A227',
+  goldHover: '#D4AF37',
+  textPrimary: '#FAF9F6',
+  textSecondary: 'rgba(250, 249, 246, 0.6)',
+  textMuted: 'rgba(250, 249, 246, 0.4)',
+};
 
 export interface DiscountCodeEmailParams {
   to: string;
@@ -100,7 +110,7 @@ export async function sendDiscountCodeEmail(
     const formattedDiscountedPrice = formatCurrency(discountedPrice, currency);
     const savings = formatCurrency(originalPrice - discountedPrice, currency);
 
-    const subject = `🎉 Your Exclusive ${discountPercentage}% Off Code is Ready!`;
+    const subject = `Your Exclusive ${discountPercentage}% Off Code is Ready`;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -110,70 +120,57 @@ export async function sendDiscountCodeEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-    .header { background: linear-gradient(135deg, #10344C 0%, #1e5b8a 100%); color: #ffffff; padding: 40px 20px; text-align: center; }
-    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
-    .content { padding: 40px 30px; }
-    .greeting { font-size: 18px; margin-bottom: 20px; color: #10344C; }
-    .message { font-size: 16px; line-height: 1.8; color: #555; margin-bottom: 30px; }
-    .product { background: #f9f9f9; border-radius: 12px; padding: 20px; margin: 30px 0; text-align: center; }
-    .product-image { max-width: 200px; height: auto; border-radius: 8px; margin-bottom: 15px; }
-    .product-title { font-size: 20px; font-weight: 600; color: #10344C; margin-bottom: 10px; }
-    .price-box { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
-    .original-price { text-decoration: line-through; color: #999; font-size: 18px; }
-    .discounted-price { color: #10344C; font-size: 28px; font-weight: 700; }
-    .savings { background: #FACC15; color: #10344C; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
-    .code-box { background: linear-gradient(135deg, #10344C 0%, #1e5b8a 100%); color: #ffffff; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; }
-    .code-label { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 10px; }
-    .code { font-size: 32px; font-weight: 700; letter-spacing: 3px; font-family: 'Courier New', monospace; background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 8px; display: inline-block; margin: 10px 0; }
-    .copy-hint { font-size: 13px; opacity: 0.8; margin-top: 10px; }
-    .cta-button { display: inline-block; background: #FACC15; color: #10344C; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 18px; margin: 20px 0; transition: all 0.3s; }
-    .cta-button:hover { background: #FDE68A; transform: translateY(-2px); }
-    .expiry { background: #fff3cd; border-left: 4px solid #FACC15; padding: 15px; margin: 20px 0; border-radius: 4px; }
-    .expiry-text { font-size: 14px; color: #856404; margin: 0; }
-    .footer { background: #f9f9f9; padding: 30px; text-align: center; font-size: 14px; color: #777; }
-    .footer a { color: #10344C; text-decoration: none; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: ${BRAND_COLORS.textPrimary}; margin: 0; padding: 0; background-color: ${BRAND_COLORS.background}; }
+    .container { max-width: 600px; margin: 0 auto; background-color: ${BRAND_COLORS.cardBg}; }
+    .header { background: ${BRAND_COLORS.background}; color: ${BRAND_COLORS.textPrimary}; padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .header .subtitle { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_COLORS.gold}; margin-top: 8px; }
+    .content { padding: 40px 30px; background: ${BRAND_COLORS.cardBg}; }
+    .greeting { font-size: 18px; margin-bottom: 20px; color: ${BRAND_COLORS.textPrimary}; }
+    .message { font-size: 15px; line-height: 1.8; color: ${BRAND_COLORS.textSecondary}; margin-bottom: 30px; }
+    .message strong { color: ${BRAND_COLORS.textPrimary}; }
+    .product { background: ${BRAND_COLORS.background}; border-radius: 12px; padding: 24px; margin: 30px 0; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+    .product-image { max-width: 180px; height: auto; border-radius: 8px; margin-bottom: 16px; }
+    .product-title { font-size: 18px; font-weight: 600; color: ${BRAND_COLORS.textPrimary}; margin-bottom: 16px; }
+    .price-box { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 16px 0; }
+    .original-price { text-decoration: line-through; color: ${BRAND_COLORS.textMuted}; font-size: 16px; }
+    .discounted-price { color: ${BRAND_COLORS.gold}; font-size: 28px; font-weight: 700; }
+    .savings { background: rgba(201, 162, 39, 0.15); color: ${BRAND_COLORS.gold}; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; border: 1px solid rgba(201, 162, 39, 0.3); }
+    .code-box { background: ${BRAND_COLORS.background}; border: 2px solid ${BRAND_COLORS.gold}; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; }
+    .code-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_COLORS.textMuted}; margin-bottom: 12px; }
+    .code { font-size: 28px; font-weight: 700; letter-spacing: 4px; font-family: 'Courier New', monospace; color: ${BRAND_COLORS.gold}; background: rgba(201, 162, 39, 0.1); padding: 16px 24px; border-radius: 8px; display: inline-block; margin: 8px 0; }
+    .copy-hint { font-size: 12px; color: ${BRAND_COLORS.textMuted}; margin-top: 12px; }
+    .cta-button { display: inline-block; background: ${BRAND_COLORS.gold}; color: ${BRAND_COLORS.background}; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; margin: 20px 0; }
+    .expiry { background: rgba(201, 162, 39, 0.1); border-left: 3px solid ${BRAND_COLORS.gold}; padding: 16px; margin: 24px 0; border-radius: 0 8px 8px 0; }
+    .expiry-text { font-size: 14px; color: ${BRAND_COLORS.textSecondary}; margin: 0; }
+    .footer { background: ${BRAND_COLORS.background}; padding: 30px; text-align: center; font-size: 13px; color: ${BRAND_COLORS.textMuted}; border-top: 1px solid rgba(255,255,255,0.05); }
+    .footer a { color: ${BRAND_COLORS.gold}; text-decoration: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>🎁 Exclusive Discount Inside!</h1>
+      <div class="subtitle">Limina</div>
+      <h1>Exclusive Offer Inside</h1>
     </div>
 
     <div class="content">
-      <div class="greeting">Hi ${customerName || 'there'}! 👋</div>
+      <div class="greeting">Hi ${customerName || 'there'},</div>
 
       <div class="message">
         <p><strong>Great news!</strong> You signed up to be notified when <strong>${productTitle}</strong> hits your target price, and we've got something even better for you.</p>
-        <p>Instead of waiting for a public price drop, you're getting an <strong>exclusive ${discountPercentage}% discount code</strong> — just for you!</p>
+        <p>Instead of waiting for a public price drop, you're getting an <strong>exclusive ${discountPercentage}% discount code</strong> - just for you.</p>
       </div>
 
-      ${
-        productImage
-          ? `
       <div class="product">
-        <img src="${productImage}" alt="${productTitle}" class="product-image" />
+        ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="product-image" />` : ''}
         <div class="product-title">${productTitle}</div>
         <div class="price-box">
           <span class="original-price">${formattedOriginalPrice}</span>
           <span class="discounted-price">${formattedDiscountedPrice}</span>
         </div>
-        <div class="savings">Save ${savings}!</div>
+        <div class="savings">Save ${savings}</div>
       </div>
-      `
-          : `
-      <div class="product">
-        <div class="product-title">${productTitle}</div>
-        <div class="price-box">
-          <span class="original-price">${formattedOriginalPrice}</span>
-          <span class="discounted-price">${formattedDiscountedPrice}</span>
-        </div>
-        <div class="savings">Save ${savings}!</div>
-      </div>
-      `
-      }
 
       <div class="code-box">
         <div class="code-label">Your Exclusive Code</div>
@@ -181,27 +178,23 @@ export async function sendDiscountCodeEmail(
         <div class="copy-hint">Copy this code and paste it at checkout</div>
       </div>
 
-      ${
-        expiresAt
-          ? `
+      ${expiresAt ? `
       <div class="expiry">
-        <p class="expiry-text">⏰ <strong>Limited Time:</strong> This code expires on ${formatDate(expiresAt)}. Don't miss out!</p>
+        <p class="expiry-text"><strong>Limited Time:</strong> This code expires on ${formatDate(expiresAt)}. Don't miss out.</p>
       </div>
-      `
-          : ''
-      }
+      ` : ''}
 
       <div style="text-align: center;">
-        <a href="${productUrl}" class="cta-button">Shop Now →</a>
+        <a href="${productUrl}" class="cta-button">Shop Now</a>
       </div>
 
       <div class="message" style="margin-top: 40px;">
-        <p style="font-size: 14px; color: #777;">
-          <strong>How to use your code:</strong><br>
+        <p style="font-size: 13px; color: ${BRAND_COLORS.textMuted};">
+          <strong style="color: ${BRAND_COLORS.textSecondary};">How to use your code:</strong><br>
           1. Click the button above to visit the product page<br>
           2. Add the item to your cart<br>
-          3. At checkout, paste your code: <strong>${discountCode}</strong><br>
-          4. Enjoy your savings!
+          3. At checkout, paste your code: <strong style="color: ${BRAND_COLORS.gold};">${discountCode}</strong><br>
+          4. Enjoy your savings
         </p>
       </div>
     </div>
@@ -209,7 +202,7 @@ export async function sendDiscountCodeEmail(
     <div class="footer">
       <p>This is an exclusive, one-time use discount code.</p>
       <p>Questions? <a href="mailto:${REPLY_TO_EMAIL}">Contact us</a></p>
-      <p style="margin-top: 20px; font-size: 12px; color: #999;">
+      <p style="margin-top: 20px; font-size: 11px;">
         You received this email because you signed up for price alerts on Limina.
       </p>
     </div>
@@ -287,7 +280,7 @@ export async function sendMerchantNotificationEmail(
       dashboardUrl,
     } = params;
 
-    const subject = `💰 ${customersNotified} Discount Codes Sent for ${productTitle}`;
+    const subject = `${customersNotified} Discount Codes Sent for ${productTitle}`;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -297,22 +290,27 @@ export async function sendMerchantNotificationEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-    .header { background: #10344C; color: #ffffff; padding: 30px 20px; text-align: center; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: ${BRAND_COLORS.textPrimary}; margin: 0; padding: 0; background-color: ${BRAND_COLORS.background}; }
+    .container { max-width: 600px; margin: 0 auto; background-color: ${BRAND_COLORS.cardBg}; }
+    .header { background: ${BRAND_COLORS.background}; color: ${BRAND_COLORS.textPrimary}; padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    .header .subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_COLORS.gold}; margin-bottom: 8px; }
     .content { padding: 40px 30px; }
-    .stats { background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0; }
-    .stat-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-    .stat-label { color: #666; }
-    .stat-value { font-weight: 700; color: #10344C; font-size: 18px; }
-    .cta-button { display: inline-block; background: #FACC15; color: #10344C; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 600; margin: 20px 0; }
-    .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #777; }
+    .content p { color: ${BRAND_COLORS.textSecondary}; }
+    .content strong { color: ${BRAND_COLORS.textPrimary}; }
+    .stats { background: ${BRAND_COLORS.background}; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid rgba(255,255,255,0.05); }
+    .stat-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .stat-label { color: ${BRAND_COLORS.textMuted}; font-size: 14px; }
+    .stat-value { font-weight: 700; color: ${BRAND_COLORS.gold}; font-size: 16px; }
+    .cta-button { display: inline-block; background: ${BRAND_COLORS.gold}; color: ${BRAND_COLORS.background}; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 700; margin: 20px 0; }
+    .footer { background: ${BRAND_COLORS.background}; padding: 24px; text-align: center; font-size: 12px; color: ${BRAND_COLORS.textMuted}; border-top: 1px solid rgba(255,255,255,0.05); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Discount Codes Sent! 🎉</h1>
+      <div class="subtitle">Limina</div>
+      <h1>Discount Codes Sent</h1>
     </div>
 
     <div class="content">
@@ -331,14 +329,14 @@ export async function sendMerchantNotificationEmail(
         </div>
         <div class="stat-item" style="border-bottom: none;">
           <span class="stat-label">Product</span>
-          <span class="stat-value">${productTitle}</span>
+          <span class="stat-value" style="color: ${BRAND_COLORS.textPrimary};">${productTitle}</span>
         </div>
       </div>
 
       <p>Each customer received a unique, one-time use discount code. You can track conversions in your dashboard.</p>
 
       <div style="text-align: center;">
-        <a href="${dashboardUrl}" class="cta-button">View Dashboard →</a>
+        <a href="${dashboardUrl}" class="cta-button">View Dashboard</a>
       </div>
     </div>
 
@@ -390,7 +388,7 @@ export async function sendPriceAlertConfirmationEmail(
     const formattedTargetPrice = formatCurrency(targetPrice, currency);
     const formattedCurrentPrice = formatCurrency(currentPrice, currency);
 
-    const subject = `✅ Price Alert Set for ${productTitle}`;
+    const subject = `Price Alert Set for ${productTitle}`;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -400,24 +398,33 @@ export async function sendPriceAlertConfirmationEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-    .header { background: linear-gradient(135deg, #10344C 0%, #1e5b8a 100%); color: #ffffff; padding: 30px 20px; text-align: center; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: ${BRAND_COLORS.textPrimary}; margin: 0; padding: 0; background-color: ${BRAND_COLORS.background}; }
+    .container { max-width: 600px; margin: 0 auto; background-color: ${BRAND_COLORS.cardBg}; }
+    .header { background: ${BRAND_COLORS.background}; color: ${BRAND_COLORS.textPrimary}; padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    .header .subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_COLORS.gold}; margin-bottom: 8px; }
     .content { padding: 40px 30px; }
-    .product { text-align: center; margin: 30px 0; }
+    .content p { color: ${BRAND_COLORS.textSecondary}; margin-bottom: 16px; }
+    .content strong { color: ${BRAND_COLORS.textPrimary}; }
+    .product { text-align: center; margin: 24px 0; }
     .product-image { max-width: 150px; border-radius: 8px; margin-bottom: 15px; }
-    .info-box { background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0; }
-    .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #777; }
+    .info-box { background: ${BRAND_COLORS.background}; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid rgba(255,255,255,0.05); }
+    .info-box p { margin: 8px 0; font-size: 14px; }
+    .info-box .label { color: ${BRAND_COLORS.textMuted}; }
+    .info-box .value { color: ${BRAND_COLORS.textPrimary}; font-weight: 600; }
+    .info-box .target { color: ${BRAND_COLORS.gold}; font-weight: 700; font-size: 18px; }
+    .footer { background: ${BRAND_COLORS.background}; padding: 24px; text-align: center; font-size: 12px; color: ${BRAND_COLORS.textMuted}; border-top: 1px solid rgba(255,255,255,0.05); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>✅ You're All Set!</h1>
+      <div class="subtitle">Limina</div>
+      <h1>You're All Set</h1>
     </div>
 
     <div class="content">
-      <p>Hi ${customerName || 'there'}! 👋</p>
+      <p>Hi ${customerName || 'there'},</p>
 
       <p>Thanks for setting up a price alert! We'll keep an eye on <strong>${productTitle}</strong> for you.</p>
 
@@ -428,15 +435,15 @@ export async function sendPriceAlertConfirmationEmail(
       ` : ''}
 
       <div class="info-box">
-        <p><strong>Product:</strong> ${productTitle}</p>
-        <p><strong>Current Price:</strong> ${formattedCurrentPrice}</p>
-        <p><strong>Your Target Price:</strong> ${formattedTargetPrice}</p>
+        <p><span class="label">Product:</span> <span class="value">${productTitle}</span></p>
+        <p><span class="label">Current Price:</span> <span class="value">${formattedCurrentPrice}</span></p>
+        <p><span class="label">Your Target Price:</span> <span class="target">${formattedTargetPrice}</span></p>
       </div>
 
       <p><strong>What happens next?</strong></p>
       <p>When the price drops to ${formattedTargetPrice} or the merchant offers you an exclusive discount, we'll send you an email immediately with your special discount code.</p>
 
-      <p>You'll be among the first to know!</p>
+      <p style="color: ${BRAND_COLORS.gold};">You'll be among the first to know.</p>
     </div>
 
     <div class="footer">

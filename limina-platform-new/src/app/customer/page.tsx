@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
-import { TrendingDown, Clock, CheckCircle2, XCircle, Activity, DollarSign, LogOut, Eye } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, Activity, ArrowLeft, Package, Tag, TrendingDown } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { DEMO_BUY_ORDERS, DEMO_CUSTOMERS } from '@/lib/demo-data'
 
@@ -45,12 +45,9 @@ function CustomerDashboardContent() {
   const [customer, setCustomer] = useState<Customer | null>(null)
 
   useEffect(() => {
-    // Demo mode - use static demo data
     if (isDemo) {
       const demoCustomer = DEMO_CUSTOMERS[0]
       setCustomer(demoCustomer)
-
-      // Filter orders for the demo customer
       const customerOrders = DEMO_BUY_ORDERS.filter(o => o.customer_id === demoCustomer.id)
       setBuyOrders(customerOrders)
       setLoading(false)
@@ -67,15 +64,11 @@ function CustomerDashboardContent() {
 
       try {
         setLoading(true)
-
-        // First, look up the customer by email
         const customerResponse = await fetch(`/api/customers?email=${encodeURIComponent(user.email)}`)
         const customerData = await customerResponse.json()
 
         if (customerData.customer) {
           setCustomer(customerData.customer)
-
-          // Fetch buy orders for this customer
           const response = await fetch(`/api/buy-orders?customerId=${customerData.customer.id}`)
           const data = await response.json()
 
@@ -83,7 +76,6 @@ function CustomerDashboardContent() {
             setBuyOrders(data.buy_orders)
           }
         } else {
-          // No customer record found for this email - they haven't made any orders yet
           setCustomer(null)
           setBuyOrders([])
         }
@@ -91,7 +83,7 @@ function CustomerDashboardContent() {
         setLoading(false)
       } catch (err) {
         console.error('Error fetching data:', err)
-        setError('Failed to load your buy orders')
+        setError('Failed to load your orders')
         setLoading(false)
       }
     }
@@ -104,66 +96,54 @@ function CustomerDashboardContent() {
     router.push('/')
   }
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      monitoring: { class: 'bg-blue-100 text-blue-800', icon: Activity },
-      fulfilled: { class: 'bg-green-100 text-green-800', icon: CheckCircle2 },
-      pending: { class: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      expired: { class: 'bg-gray-100 text-gray-800', icon: XCircle },
-      cancelled: { class: 'bg-red-100 text-red-800', icon: XCircle }
-    }
-    return badges[status as keyof typeof badges] || { class: 'bg-gray-100 text-gray-800', icon: Clock }
+  const formatCurrency = (amount: number, currency = 'GBP') => {
+    const symbol = currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : '$'
+    return `${symbol}${amount.toFixed(0)}`
   }
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
-  const formatCurrency = (amount: number) => `£${amount.toFixed(2)}`
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString()
-  const calculateSavings = (target: number, current: number) => current - target
+  const getDaysUntilExpiry = (expiresAt: string) => {
+    return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  }
 
   const activeOrders = buyOrders.filter(order => order.status === 'monitoring')
   const fulfilledOrders = buyOrders.filter(order => order.status === 'fulfilled')
-  const totalSavings = fulfilledOrders.reduce((sum, order) => sum + calculateSavings(order.target_price, order.current_price), 0)
+  const totalSavings = fulfilledOrders.reduce((sum, order) => sum + (order.current_price - order.target_price), 0)
 
-  // Demo mode bypasses auth
   if (!isDemo && (authLoading || loading)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your buy orders...</p>
-        </div>
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (isDemo && loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading demo dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!isDemo && !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <Logo />
-          <h1 className="text-2xl font-bold text-gray-900 mt-4 mb-2">Customer Dashboard</h1>
-          <p className="text-gray-600 mb-6">
-            Sign in to view and track your buy orders
+          <h1 className="text-2xl font-bold text-[#FAF9F6] mt-6 mb-2">Your Orders</h1>
+          <p className="text-white/60 mb-8">
+            Sign in to view and track your price alerts
           </p>
           <Link
             href="/auth?redirectTo=/customer"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-block px-8 py-3 bg-[#C9A227] text-[#0C0A09] font-bold rounded-lg hover:bg-[#D4AF37] transition-colors"
           >
             Sign In
           </Link>
-          <p className="mt-4 text-sm text-gray-500">
+          <p className="mt-6 text-sm text-white/40">
             Or{' '}
-            <Link href="/customer?demo=true" className="text-blue-600 hover:text-blue-700">
+            <Link href="/customer?demo=true" className="text-[#C9A227] hover:text-[#D4AF37]">
               view demo
             </Link>
           </p>
@@ -174,13 +154,13 @@ function CustomerDashboardContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">Error</div>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="text-red-400 text-xl mb-4">Error</div>
+          <p className="text-white/60 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-[#C9A227] text-[#0C0A09] font-bold rounded-lg hover:bg-[#D4AF37]"
           >
             Retry
           </button>
@@ -190,43 +170,40 @@ function CustomerDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      {/* Demo Banner */}
+    <div className="min-h-screen bg-[#0C0A09] text-[#FAF9F6]">
       {isDemo && (
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Eye className="w-5 h-5" />
-              <span className="font-medium">Demo Mode - Viewing as sample customer Sarah Johnson</span>
+        <div className="bg-[#C9A227]/10 border-b border-[#C9A227]/20 px-4 py-3">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#C9A227] animate-pulse" />
+              <span className="text-sm text-[#C9A227] font-medium">Demo Mode - Viewing as Sarah Johnson</span>
             </div>
             <Link
               href="/auth"
-              className="bg-white text-purple-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-purple-50 transition-colors"
+              className="bg-[#C9A227] text-[#0C0A09] px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-[#D4AF37] transition-colors"
             >
-              Sign Up Free
+              Sign Up
             </Link>
           </div>
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="border-b border-white/5 bg-[#161413]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center gap-2">
               <Logo />
-              <h1 className="text-2xl font-bold text-blue-600">Limina</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                {customer?.name || (isDemo ? 'Demo User' : user?.email)}
+              <span className="font-bold text-lg tracking-tight">LIMINA</span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-white/60">
+                {customer?.name || (isDemo ? 'Sarah Johnson' : user?.email)}
               </span>
               {!isDemo && (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
+                  className="text-sm text-white/40 hover:text-white transition-colors"
                 >
-                  <LogOut className="w-4 h-4 mr-1" />
                   Sign Out
                 </button>
               )}
@@ -235,110 +212,92 @@ function CustomerDashboardContent() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Your Buy Orders</h2>
-          <p className="text-gray-600 mt-2">
-            Track your conditional purchases and see when your price targets are met
-          </p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/" className="text-white/40 hover:text-white transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Your Dashboard</p>
+            <h1 className="text-2xl font-bold tracking-tight">Price Alerts</h1>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Activity className="h-8 w-8 text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-white/40 uppercase tracking-wider">Waiting</p>
+                <p className="text-3xl font-bold text-[#C9A227] mt-1">{activeOrders.length}</p>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Active Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{activeOrders.length}</p>
-              </div>
+              <Activity className="h-8 w-8 text-white/10" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-white/40 uppercase tracking-wider">Fulfilled</p>
+                <p className="text-3xl font-bold text-green-400 mt-1">{fulfilledOrders.length}</p>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Fulfilled Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{fulfilledOrders.length}</p>
-              </div>
+              <CheckCircle2 className="h-8 w-8 text-white/10" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <DollarSign className="h-8 w-8 text-green-600" />
+          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-white/40 uppercase tracking-wider">Total Saved</p>
+                <p className="text-3xl font-bold text-[#C9A227] mt-1">{formatCurrency(totalSavings)}</p>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Savings</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSavings)}</p>
-              </div>
+              <TrendingDown className="h-8 w-8 text-white/10" />
             </div>
           </div>
         </div>
 
-        {/* Active Orders */}
         {activeOrders.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 mb-8">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-blue-600" />
-                Active Monitoring Orders
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">We're watching these products for you</p>
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-4 h-4 text-[#C9A227]" />
+              <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Waiting for Price Drop</h2>
             </div>
-            
-            <div className="p-6 space-y-4">
+
+            <div className="space-y-3">
               {activeOrders.map((order) => {
-                const isClose = order.current_price <= order.target_price * 1.1 // Within 10%
-                const probability = Math.max(30, Math.min(95, Math.round((order.current_price - order.target_price) / order.current_price * 100 + 60)))
-                
+                const daysLeft = getDaysUntilExpiry(order.expires_at)
+                const priceDiff = order.current_price - order.target_price
+                const discountPercent = ((priceDiff / order.current_price) * 100).toFixed(0)
+
                 return (
-                  <div key={order.id} className={`border rounded-lg p-4 ${isClose ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        {order.products?.image_url && (
-                          <img 
-                            className="h-16 w-16 rounded-lg object-cover" 
-                            src={order.products.image_url} 
-                            alt={order.products.title} 
-                          />
-                        )}
-                        <div>
-                          <h4 className="font-semibold text-gray-900 text-lg">{order.products?.title}</h4>
-                          <p className="text-sm text-gray-600">Target: {formatCurrency(order.target_price)} | Current: {formatCurrency(order.current_price)}</p>
-                          <p className="text-sm text-gray-500">Created: {formatDate(order.created_at)}</p>
+                  <div key={order.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors">
+                    <div className="flex items-center gap-4">
+                      {order.products?.image_url ? (
+                        <img
+                          className="h-16 w-16 rounded-lg object-cover"
+                          src={order.products.image_url}
+                          alt={order.products.title}
+                        />
+                      ) : (
+                        <div className="h-16 w-16 rounded-lg bg-white/5 flex items-center justify-center">
+                          <Package className="w-6 h-6 text-white/20" />
                         </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[#FAF9F6] truncate">{order.products?.title}</h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-sm text-white/40">Current: {formatCurrency(order.current_price)}</span>
+                          <span className="text-sm text-[#C9A227] font-medium">Target: {formatCurrency(order.target_price)}</span>
+                        </div>
+                        <p className="text-xs text-white/30 mt-1">{discountPercent}% below current price</p>
                       </div>
                       <div className="text-right">
-                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800`}>
-                          Monitoring
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/20">
+                          <Clock className="w-3 h-3" />
+                          Watching
                         </span>
-                        <p className="text-sm text-blue-600 mt-2 font-medium">
-                          {probability}% probability based on trends
+                        <p className={`text-xs mt-2 ${daysLeft <= 3 ? 'text-red-400' : 'text-white/40'}`}>
+                          {daysLeft}d left
                         </p>
-                      </div>
-                    </div>
-                    
-                    {/* Progress bar */}
-                    <div className="mt-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Price Progress</span>
-                        <span>{formatCurrency(Math.abs(order.current_price - order.target_price))} to go</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full ${isClose ? 'bg-blue-500' : 'bg-gray-400'}`}
-                          style={{
-                            width: `${Math.min(100, Math.max(20, (order.target_price / order.current_price) * 100))}%`
-                          }}
-                        ></div>
                       </div>
                     </div>
                   </div>
@@ -348,45 +307,45 @@ function CustomerDashboardContent() {
           </div>
         )}
 
-        {/* Fulfilled Orders */}
         {fulfilledOrders.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 mb-8">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-                Completed Purchases
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">Your successful buy orders and savings</p>
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Completed</h2>
             </div>
-            
-            <div className="p-6 space-y-4">
+
+            <div className="space-y-3">
               {fulfilledOrders.map((order) => {
-                const savings = calculateSavings(order.target_price, order.current_price)
-                const savingsPercent = Math.round((savings / order.current_price) * 100)
-                
+                const savings = order.current_price - order.target_price
+
                 return (
-                  <div key={order.id} className="border border-green-200 rounded-lg p-4 bg-green-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {order.products?.image_url && (
-                          <img 
-                            className="h-16 w-16 rounded-lg object-cover" 
-                            src={order.products.image_url} 
-                            alt={order.products.title} 
-                          />
-                        )}
-                        <div>
-                          <h4 className="font-semibold text-gray-900 text-lg">{order.products?.title}</h4>
-                          <p className="text-sm text-gray-600">Purchased at: {formatCurrency(order.target_price)}</p>
-                          <p className="text-sm text-gray-500">Fulfilled: {order.fulfilled_at ? formatDate(order.fulfilled_at) : 'Recently'}</p>
+                  <div key={order.id} className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+                    <div className="flex items-center gap-4">
+                      {order.products?.image_url ? (
+                        <img
+                          className="h-16 w-16 rounded-lg object-cover"
+                          src={order.products.image_url}
+                          alt={order.products.title}
+                        />
+                      ) : (
+                        <div className="h-16 w-16 rounded-lg bg-white/5 flex items-center justify-center">
+                          <Package className="w-6 h-6 text-white/20" />
                         </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[#FAF9F6] truncate">{order.products?.title}</h3>
+                        <p className="text-sm text-white/40 mt-1">Purchased at {formatCurrency(order.target_price)}</p>
+                        <p className="text-xs text-white/30 mt-1">
+                          Fulfilled {order.fulfilled_at ? formatDate(order.fulfilled_at) : 'recently'}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
-                          ✓ Complete
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Complete
                         </span>
-                        <p className="text-sm text-green-600 mt-2 font-bold">
-                          Saved {formatCurrency(savings)} ({savingsPercent}%)
+                        <p className="text-sm text-green-400 font-semibold mt-2">
+                          Saved {formatCurrency(savings)}
                         </p>
                       </div>
                     </div>
@@ -397,107 +356,28 @@ function CustomerDashboardContent() {
           </div>
         )}
 
-        {/* All Orders Table */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">All Buy Orders</h3>
-            <p className="text-sm text-gray-600 mt-1">Complete history of your conditional purchases</p>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Target Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Current Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {buyOrders.length > 0 ? buyOrders.map((order) => {
-                  const status = getStatusBadge(order.status)
-                  const StatusIcon = status.icon
-                  
-                  return (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {order.products?.image_url && (
-                            <img 
-                              className="h-10 w-10 rounded-lg object-cover mr-3" 
-                              src={order.products.image_url} 
-                              alt={order.products.title} 
-                            />
-                          )}
-                          <div className="text-sm font-medium text-gray-900">
-                            {order.products?.title || 'Product'}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-green-600">
-                          {formatCurrency(order.target_price)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatCurrency(order.current_price)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${status.class}`}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(order.created_at)}
-                      </td>
-                    </tr>
-                  )
-                }) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      No buy orders found. Create your first buy order on our landing page!
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-800 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
-              <TrendingDown className="w-4 h-4 mr-2" />
-              Create Buy Order
-            </Link>
-            <button className="text-blue-600 hover:text-blue-800 flex items-center" onClick={() => window.location.reload()}>
-              <Activity className="w-4 h-4 mr-2" />
-              Refresh Orders
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="text-gray-600 hover:text-red-600 flex items-center"
+        {buyOrders.length === 0 && (
+          <div className="text-center py-16">
+            <Package className="w-12 h-12 text-white/10 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white/60 mb-2">No price alerts yet</h3>
+            <p className="text-sm text-white/40 mb-6">Set your first price alert to start saving</p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0C0A09] font-bold rounded-lg hover:bg-[#D4AF37] transition-colors"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </button>
+              <Tag className="w-4 h-4" />
+              Name Your Price
+            </Link>
+          </div>
+        )}
+
+        <div className="mt-8 p-6 bg-white/[0.02] border border-white/5 rounded-xl">
+          <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">How It Works</h3>
+          <div className="space-y-3 text-sm text-white/40">
+            <p><span className="text-[#C9A227]">1.</span> You set a target price for products you want</p>
+            <p><span className="text-[#C9A227]">2.</span> We notify the merchant about your interest</p>
+            <p><span className="text-[#C9A227]">3.</span> When they offer a discount, you get an exclusive code</p>
+            <p><span className="text-[#C9A227]">4.</span> Use the code to buy at your target price</p>
           </div>
         </div>
       </div>
@@ -507,11 +387,8 @@ function CustomerDashboardContent() {
 
 function CustomerDashboardFallback() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
-      </div>
+    <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 }

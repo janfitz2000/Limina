@@ -52,16 +52,15 @@ interface Stats {
 function DashboardOverviewContent() {
   const searchParams = useSearchParams()
   const isDemo = searchParams.get('demo') === 'true'
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, refreshUser } = useAuth()
   const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
   const [error, setError] = useState<string | null>(null)
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
-    console.log('Dashboard useEffect - authLoading:', authLoading, 'user:', user, 'isDemo:', isDemo)
-
     if (isDemo) {
       const demoOrders = DEMO_BUY_ORDERS.map(order => ({
         id: order.id,
@@ -98,7 +97,15 @@ function DashboardOverviewContent() {
       return
     }
 
+    // Auto-retry if merchant_id is missing (race condition after registration)
     if (!user.merchant_id) {
+      if (retryCount < 3) {
+        const timer = setTimeout(() => {
+          setRetryCount(prev => prev + 1)
+          refreshUser()
+        }, 1000)
+        return () => clearTimeout(timer)
+      }
       setError('Your merchant profile is being set up. Please refresh in a moment.')
       setLoading(false)
       return
@@ -143,7 +150,7 @@ function DashboardOverviewContent() {
     }
 
     fetchData()
-  }, [user, authLoading, isDemo])
+  }, [user, authLoading, isDemo, retryCount, refreshUser])
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(0)}`
   const formatDate = (dateString: string) => {
