@@ -15,11 +15,8 @@ export type User = {
 
 export type MerchantProfile = Database['public']['Tables']['merchants']['Row']
 
-// Get current authenticated user with retry logic for race conditions
-export const getCurrentUser = async (retryCount = 0): Promise<User | null> => {
-  const MAX_RETRIES = 5
-  const RETRY_DELAY_MS = 500
-
+// Get current authenticated user
+export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const supabase = getSupabase()
     const { data: { user }, error } = await supabase.auth.getUser()
@@ -29,7 +26,7 @@ export const getCurrentUser = async (retryCount = 0): Promise<User | null> => {
     }
 
     // Get merchant profile if user is a merchant
-    const { data: merchant, error: merchantError } = await supabase
+    const { data: merchant } = await supabase
       .from('merchants')
       .select('*')
       .eq('user_id', user.id)
@@ -45,16 +42,7 @@ export const getCurrentUser = async (retryCount = 0): Promise<User | null> => {
       }
     }
 
-    // If user exists but no merchant profile found, retry with backoff
-    // This handles race condition after registration where merchant profile
-    // might not be immediately visible due to RLS/replication timing
-    if (!merchant && retryCount < MAX_RETRIES) {
-      const delay = RETRY_DELAY_MS * Math.pow(1.5, retryCount)
-      await new Promise(resolve => setTimeout(resolve, delay))
-      return getCurrentUser(retryCount + 1)
-    }
-
-    // Default to customer role if no merchant profile after retries
+    // Default to customer role if no merchant profile
     return {
       id: user.id,
       email: user.email!,
