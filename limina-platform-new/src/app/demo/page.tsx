@@ -127,6 +127,11 @@ export default function CustomerJourneyDemo() {
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
       `}</style>
 
       {/* Nav */}
@@ -277,46 +282,50 @@ export default function CustomerJourneyDemo() {
                       ADD TO CART
                     </button>
 
-                    {/* Smart Widget - appears after exit intent */}
+                    {/* Smart Widget - appears after exit intent - sleek inline style */}
                     <div className={`transition-all duration-500 overflow-hidden ${showExitIntent ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0'}`}>
-                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 border border-yellow-200">
-                        <div className="flex items-center gap-3 mb-3">
-                          <input type="checkbox" className="w-5 h-5 accent-yellow-600" checked readOnly />
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900">Want a better price?</p>
-                            <p className="text-xs text-gray-500">Set your target and we'll notify you</p>
-                          </div>
-                          <span className="bg-yellow-600 text-white text-xs px-2 py-1 font-bold">SAVE</span>
-                        </div>
-
-                        {!showSuccess ? (
-                          <div className="pt-3 border-t border-yellow-200 space-y-3">
-                            <div>
-                              <label className="text-xs text-gray-600">Your target price</label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-gray-700 font-semibold">$</span>
-                                <input
-                                  type="number"
-                                  value={widgetPrice}
-                                  onChange={(e) => setWidgetPrice(Number(e.target.value))}
-                                  className="flex-1 px-3 py-2 border border-gray-300 text-sm text-gray-900"
-                                />
-                              </div>
+                      <div className="bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden">
+                        <div className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-5 h-5 rounded border border-white/20 bg-white/5 flex items-center justify-center">
+                              <Check className="w-3 h-3 text-[#C9A227]" />
                             </div>
-                            <button
-                              onClick={handleCreateOrder}
-                              className="w-full bg-yellow-600 text-white py-2 font-semibold text-sm hover:bg-yellow-700 transition-colors"
-                            >
-                              Create Price Alert
-                            </button>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-white/90">Name your price</p>
+                              <p className="text-xs text-white/40">Get notified when it drops</p>
+                            </div>
+                            <span className="text-[10px] text-white/30 uppercase tracking-wider">Limina</span>
                           </div>
-                        ) : (
-                          <div className="pt-3 border-t border-yellow-200 text-center py-4">
-                            <div className="text-2xl mb-2">&#10003;</div>
-                            <div className="font-bold text-gray-900 text-sm">Alert Created!</div>
-                            <p className="text-xs text-gray-500">We'll notify you at ${widgetPrice}</p>
-                          </div>
-                        )}
+
+                          {!showSuccess ? (
+                            <div className="pt-3 border-t border-white/10 space-y-3">
+                              <div>
+                                <label className="text-xs text-white/40">Your target</label>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-white/50">$</span>
+                                  <input
+                                    type="number"
+                                    value={widgetPrice}
+                                    onChange={(e) => setWidgetPrice(Number(e.target.value))}
+                                    className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white focus:border-[#C9A227]/50 focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <button
+                                onClick={handleCreateOrder}
+                                className="w-full bg-[#C9A227] text-black py-2 font-semibold text-sm rounded hover:bg-[#D4AF37] transition-colors"
+                              >
+                                Set Alert
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="pt-3 border-t border-white/10 text-center py-4">
+                              <Check className="w-6 h-6 text-[#C9A227] mx-auto mb-2" />
+                              <div className="font-medium text-white/90 text-sm">Alert set for ${widgetPrice}</div>
+                              <p className="text-xs text-white/40">We'll email you when it drops</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -544,13 +553,19 @@ export default function CustomerJourneyDemo() {
                           </>
                         )}
 
-                        {/* Widget appears for all triggers */}
+                        {/* Widget appears for all triggers - subtle inline style */}
                         {demoPhase === 'triggered' && (
-                          <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 border border-yellow-200 animate-pulse rounded">
-                            <div className="flex items-center gap-2">
-                              <input type="checkbox" className="w-4 h-4 accent-yellow-600" checked readOnly />
-                              <span className="text-sm font-semibold text-gray-900">Want a better price?</span>
-                              <span className="ml-auto bg-yellow-600 text-white text-xs px-2 py-0.5 font-bold rounded">SAVE</span>
+                          <div className="absolute bottom-3 left-3 right-3 animate-fadeIn">
+                            <div className="bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-lg p-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-4 h-4 rounded border border-white/20 bg-white/5 flex items-center justify-center">
+                                  <Check className="w-2.5 h-2.5 text-[#C9A227]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs text-white/70">Name your price</span>
+                                </div>
+                                <span className="text-[10px] text-white/30 uppercase tracking-wider">Limina</span>
+                              </div>
                             </div>
                           </div>
                         )}
