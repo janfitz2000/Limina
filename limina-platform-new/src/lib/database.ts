@@ -18,6 +18,27 @@ function getSupabase(): SupabaseClient {
 export const createClient = () => getSupabase()
 
 
+// Widget settings types
+export type WidgetTriggerConfig = {
+  exit_intent?: { enabled: boolean; threshold?: number }
+  time_on_page?: { enabled: boolean; delay_seconds?: number }
+  cart_abandonment?: { enabled: boolean }
+  scroll_depth?: { enabled: boolean; threshold?: number }
+}
+
+export type WidgetDisplayConfig = {
+  style?: 'inline' | 'popup'
+  position?: 'after_element' | 'before_element' | 'fixed'
+  collapsed_text?: string
+  expanded_text?: string
+  theme?: 'subtle' | 'bold'
+}
+
+export type WidgetSettings = {
+  triggers: WidgetTriggerConfig
+  display: WidgetDisplayConfig
+}
+
 // Basic types for our data
 export type Merchant = {
   id: string
@@ -25,6 +46,7 @@ export type Merchant = {
   email: string
   shopify_domain?: string | null
   shopify_access_token?: string | null
+  widget_settings?: WidgetSettings | null
   created_at: string
   updated_at: string
 }
