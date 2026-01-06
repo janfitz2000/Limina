@@ -31,6 +31,10 @@ export default function CustomerJourneyDemo() {
     cart_abandonment: true,
     scroll_depth: false
   })
+  const [selectedTrigger, setSelectedTrigger] = useState<'exit_intent' | 'time_delay' | 'cart_abandonment' | 'scroll_depth'>('exit_intent')
+  const [demoPhase, setDemoPhase] = useState<'idle' | 'detecting' | 'triggered'>('idle')
+  const [timeLeft, setTimeLeft] = useState(30)
+  const [scrollPosition, setScrollPosition] = useState(0)
 
   const steps = [
     { id: 'widget' as Step, label: 'Widget', icon: ShoppingCart },
@@ -49,18 +53,66 @@ export default function CustomerJourneyDemo() {
     }
   }, [activeStep])
 
-  // Demo the trigger detection animation
+  // Demo the trigger detection animation based on selected trigger
   useEffect(() => {
     if (activeStep === 'triggers') {
-      setTriggerDemo('hidden')
-      const timer1 = setTimeout(() => setTriggerDemo('detecting'), 1000)
-      const timer2 = setTimeout(() => setTriggerDemo('triggered'), 3000)
-      return () => {
-        clearTimeout(timer1)
-        clearTimeout(timer2)
+      setDemoPhase('idle')
+      setTimeLeft(30)
+      setScrollPosition(0)
+
+      const timer1 = setTimeout(() => setDemoPhase('detecting'), 500)
+
+      let timer2: NodeJS.Timeout
+      if (selectedTrigger === 'time_delay') {
+        // Countdown animation
+        let count = 30
+        const countdownInterval = setInterval(() => {
+          count -= 5
+          setTimeLeft(count)
+          if (count <= 0) {
+            clearInterval(countdownInterval)
+            setDemoPhase('triggered')
+          }
+        }, 400)
+        return () => {
+          clearTimeout(timer1)
+          clearInterval(countdownInterval)
+        }
+      } else if (selectedTrigger === 'scroll_depth') {
+        // Scroll animation
+        let scroll = 0
+        const scrollInterval = setInterval(() => {
+          scroll += 15
+          setScrollPosition(scroll)
+          if (scroll >= 80) {
+            clearInterval(scrollInterval)
+            // Now scroll back up
+            setTimeout(() => {
+              let scrollBack = 80
+              const scrollBackInterval = setInterval(() => {
+                scrollBack -= 20
+                setScrollPosition(scrollBack)
+                if (scrollBack <= 20) {
+                  clearInterval(scrollBackInterval)
+                  setDemoPhase('triggered')
+                }
+              }, 300)
+            }, 500)
+          }
+        }, 300)
+        return () => {
+          clearTimeout(timer1)
+          clearInterval(scrollInterval)
+        }
+      } else {
+        timer2 = setTimeout(() => setDemoPhase('triggered'), 2500)
+        return () => {
+          clearTimeout(timer1)
+          clearTimeout(timer2)
+        }
       }
     }
-  }, [activeStep])
+  }, [activeStep, selectedTrigger])
 
   const handleCreateOrder = () => {
     setShowSuccess(true)
@@ -292,33 +344,51 @@ export default function CustomerJourneyDemo() {
                     without showing discounts to committed buyers.
                   </p>
 
-                  <div className="space-y-4 mb-8">
+                  <div className="space-y-3 mb-8">
                     {[
-                      { key: 'exit_intent', icon: MousePointer, label: 'Exit Intent', desc: 'Mouse moves to leave page', threshold: '50px from top' },
-                      { key: 'time_delay', icon: Clock, label: 'Time Delay', desc: 'After time on page', threshold: '30 seconds' },
-                      { key: 'cart_abandonment', icon: ShoppingCart, label: 'Cart Abandonment', desc: 'Returns after leaving', threshold: 'Cookie-based' },
-                      { key: 'scroll_depth', icon: ArrowDown, label: 'Scroll Depth', desc: 'Scrolls back up after viewing', threshold: '70% depth' },
+                      { key: 'exit_intent', icon: MousePointer, label: 'Exit Intent', desc: 'Mouse moves toward browser close', threshold: '50px from top' },
+                      { key: 'time_delay', icon: Clock, label: 'Time Delay', desc: 'User lingers on page', threshold: '30 seconds' },
+                      { key: 'cart_abandonment', icon: ShoppingCart, label: 'Cart Abandonment', desc: 'User returns after leaving', threshold: 'Cookie-based' },
+                      { key: 'scroll_depth', icon: ArrowDown, label: 'Scroll Depth', desc: 'Scrolls up after viewing price', threshold: '70% then back' },
                     ].map((trigger) => {
                       const isEnabled = triggers[trigger.key as keyof typeof triggers]
+                      const isSelected = selectedTrigger === trigger.key
                       return (
-                        <div key={trigger.key} className={`flex items-center gap-3 p-3 border transition-all ${isEnabled ? 'bg-white/5 border-white/10' : 'bg-white/[0.02] border-white/5'}`}>
-                          <div className={`w-10 h-10 flex items-center justify-center transition-colors ${isEnabled ? 'bg-[#C9A227]/20' : 'bg-white/5'}`}>
-                            <trigger.icon className={`w-5 h-5 transition-colors ${isEnabled ? 'text-[#C9A227]' : 'text-white/30'}`} />
+                        <button
+                          key={trigger.key}
+                          onClick={() => setSelectedTrigger(trigger.key as typeof selectedTrigger)}
+                          className={`w-full flex items-center gap-3 p-3 border transition-all text-left ${
+                            isSelected
+                              ? 'bg-[#C9A227]/10 border-[#C9A227]/50 ring-1 ring-[#C9A227]/30'
+                              : isEnabled
+                                ? 'bg-white/5 border-white/10 hover:bg-white/10'
+                                : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 flex items-center justify-center transition-colors ${
+                            isSelected ? 'bg-[#C9A227]/30' : isEnabled ? 'bg-[#C9A227]/20' : 'bg-white/5'
+                          }`}>
+                            <trigger.icon className={`w-5 h-5 transition-colors ${
+                              isSelected ? 'text-[#C9A227]' : isEnabled ? 'text-[#C9A227]/70' : 'text-white/30'
+                            }`} />
                           </div>
-                          <div className="flex-1">
-                            <div className={`font-semibold text-sm transition-colors ${isEnabled ? 'text-white' : 'text-white/50'}`}>{trigger.label}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className={`font-semibold text-sm transition-colors ${isSelected || isEnabled ? 'text-white' : 'text-white/50'}`}>
+                              {trigger.label}
+                              {isSelected && <span className="ml-2 text-xs text-[#C9A227]">viewing</span>}
+                            </div>
                             <div className="text-xs text-white/40">{trigger.desc}</div>
-                            {isEnabled && (
-                              <div className="text-xs text-[#C9A227] mt-1">{trigger.threshold}</div>
-                            )}
                           </div>
-                          <button
-                            onClick={() => setTriggers(prev => ({ ...prev, [trigger.key]: !prev[trigger.key as keyof typeof triggers] }))}
-                            className={`w-11 h-6 rounded-full relative transition-colors ${isEnabled ? 'bg-[#C9A227]' : 'bg-white/20'}`}
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setTriggers(prev => ({ ...prev, [trigger.key]: !prev[trigger.key as keyof typeof triggers] }))
+                            }}
+                            className={`w-11 h-6 rounded-full relative transition-colors cursor-pointer ${isEnabled ? 'bg-[#C9A227]' : 'bg-white/20'}`}
                           >
                             <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${isEnabled ? 'right-0.5' : 'left-0.5'}`} />
-                          </button>
-                        </div>
+                          </div>
+                        </button>
                       )
                     })}
                   </div>
@@ -337,14 +407,19 @@ export default function CustomerJourneyDemo() {
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
 
                   <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between">
-                    <span className="font-bold text-sm">Trigger Demo</span>
+                    <span className="font-bold text-sm">
+                      {selectedTrigger === 'exit_intent' && 'Exit Intent Demo'}
+                      {selectedTrigger === 'time_delay' && 'Time Delay Demo'}
+                      {selectedTrigger === 'cart_abandonment' && 'Cart Abandonment Demo'}
+                      {selectedTrigger === 'scroll_depth' && 'Scroll Depth Demo'}
+                    </span>
                     <span className={`text-xs px-2 py-1 ${
-                      triggerDemo === 'hidden' ? 'bg-white/10 text-white/50' :
-                      triggerDemo === 'detecting' ? 'bg-blue-500/20 text-blue-400' :
+                      demoPhase === 'idle' ? 'bg-white/10 text-white/50' :
+                      demoPhase === 'detecting' ? 'bg-blue-500/20 text-blue-400' :
                       'bg-green-500/20 text-green-400'
                     }`}>
-                      {triggerDemo === 'hidden' ? 'Widget Hidden' :
-                       triggerDemo === 'detecting' ? 'Detecting...' :
+                      {demoPhase === 'idle' ? 'Widget Hidden' :
+                       demoPhase === 'detecting' ? 'Detecting...' :
                        'Triggered!'}
                     </span>
                   </div>
@@ -360,36 +435,122 @@ export default function CustomerJourneyDemo() {
                         </div>
                         <div className="flex-1 text-center text-xs text-white/30">techstyle.com/products/iphone</div>
                       </div>
-                      <div className="p-4 min-h-[200px] relative">
-                        {/* Exit zone indicator */}
-                        {triggerDemo === 'detecting' && (
-                          <div className="absolute top-0 left-0 right-0 h-8 bg-red-500/20 border-b-2 border-dashed border-red-400 flex items-center justify-center">
-                            <span className="text-xs text-red-400">Exit zone</span>
-                          </div>
+                      <div className="p-4 min-h-[220px] relative overflow-hidden">
+
+                        {/* EXIT INTENT DEMO */}
+                        {selectedTrigger === 'exit_intent' && (
+                          <>
+                            {demoPhase === 'detecting' && (
+                              <div className="absolute top-0 left-0 right-0 h-8 bg-red-500/20 border-b-2 border-dashed border-red-400 flex items-center justify-center">
+                                <span className="text-xs text-red-400">Exit zone detected</span>
+                              </div>
+                            )}
+                            {demoPhase === 'detecting' && (
+                              <div className="absolute transition-all duration-1000" style={{ top: '60%', left: '50%', transform: 'translateX(-50%)' }}>
+                                <div className="animate-[moveUp_2s_ease-in-out_forwards]">
+                                  <MousePointer className="w-6 h-6 text-white drop-shadow-lg" />
+                                </div>
+                              </div>
+                            )}
+                            <div className="text-center text-white/30 text-sm pt-10">Product page content</div>
+                          </>
                         )}
 
-                        {/* Mouse cursor animation */}
-                        {triggerDemo === 'detecting' && (
-                          <div className="absolute animate-bounce" style={{
-                            top: '20%',
-                            left: '50%',
-                            animation: 'moveUp 2s ease-in-out forwards'
-                          }}>
-                            <MousePointer className="w-5 h-5 text-white" />
-                          </div>
+                        {/* TIME DELAY DEMO */}
+                        {selectedTrigger === 'time_delay' && (
+                          <>
+                            <div className="absolute top-4 right-4 text-right">
+                              <div className="text-xs text-white/40 mb-1">Time on page</div>
+                              <div className={`text-2xl font-mono font-bold ${demoPhase === 'triggered' ? 'text-green-400' : 'text-white'}`}>
+                                {demoPhase === 'triggered' ? '0:00' : `0:${timeLeft.toString().padStart(2, '0')}`}
+                              </div>
+                              {demoPhase === 'detecting' && (
+                                <div className="text-xs text-blue-400 mt-1">Counting down...</div>
+                              )}
+                            </div>
+                            <div className="text-center text-white/30 text-sm pt-10">Product page content</div>
+                            {demoPhase === 'detecting' && (
+                              <div className="absolute bottom-4 left-4 right-4">
+                                <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-blue-400 transition-all duration-300"
+                                    style={{ width: `${((30 - timeLeft) / 30) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
 
-                        <div className="text-center text-white/30 text-sm pt-8">
-                          Product page content
-                        </div>
+                        {/* CART ABANDONMENT DEMO */}
+                        {selectedTrigger === 'cart_abandonment' && (
+                          <>
+                            {demoPhase === 'idle' && (
+                              <div className="text-center pt-8">
+                                <ShoppingCart className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                                <div className="text-white/30 text-sm">Cart has items</div>
+                              </div>
+                            )}
+                            {demoPhase === 'detecting' && (
+                              <div className="text-center pt-4">
+                                <div className="text-xs text-red-400 mb-2">User left the site...</div>
+                                <div className="w-full h-20 bg-black/30 rounded flex items-center justify-center mb-2">
+                                  <span className="text-white/20 text-xs">Browser closed</span>
+                                </div>
+                                <div className="text-xs text-blue-400 animate-pulse">Cookie saved: cart_abandoned=true</div>
+                              </div>
+                            )}
+                            {demoPhase === 'triggered' && (
+                              <div className="text-center pt-4">
+                                <div className="text-xs text-green-400 mb-2">User returned!</div>
+                                <div className="text-white/30 text-sm">Welcome back detected</div>
+                              </div>
+                            )}
+                          </>
+                        )}
 
-                        {/* Widget appears */}
-                        {triggerDemo === 'triggered' && (
-                          <div className="mt-8 bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 border border-yellow-200 animate-pulse">
+                        {/* SCROLL DEPTH DEMO */}
+                        {selectedTrigger === 'scroll_depth' && (
+                          <>
+                            <div className="absolute right-2 top-2 bottom-2 w-2 bg-white/10 rounded-full overflow-hidden">
+                              <div
+                                className="w-full bg-blue-400 rounded-full transition-all duration-200"
+                                style={{ height: `${scrollPosition}%` }}
+                              />
+                            </div>
+                            <div className="absolute right-6 top-2 text-right">
+                              <div className="text-xs text-white/40">Scroll</div>
+                              <div className={`text-lg font-mono ${scrollPosition > 70 ? 'text-blue-400' : 'text-white/60'}`}>
+                                {scrollPosition}%
+                              </div>
+                            </div>
+                            <div className="space-y-2 pt-2 pr-16">
+                              <div className="text-xs text-white/50">Product Title</div>
+                              <div className="h-2 bg-white/10 rounded w-3/4" />
+                              <div className="h-2 bg-white/10 rounded w-1/2" />
+                              {scrollPosition >= 40 && (
+                                <div className="mt-4 p-2 bg-white/10 rounded">
+                                  <div className="text-white text-sm font-bold">$999</div>
+                                  <div className="text-xs text-white/40">Price viewed</div>
+                                </div>
+                              )}
+                              {scrollPosition >= 60 && scrollPosition < 80 && (
+                                <div className="text-xs text-blue-400 mt-2">User saw the price...</div>
+                              )}
+                              {scrollPosition < 40 && demoPhase === 'triggered' && (
+                                <div className="text-xs text-yellow-400 mt-2">Scrolling back up!</div>
+                              )}
+                            </div>
+                          </>
+                        )}
+
+                        {/* Widget appears for all triggers */}
+                        {demoPhase === 'triggered' && (
+                          <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 border border-yellow-200 animate-pulse rounded">
                             <div className="flex items-center gap-2">
                               <input type="checkbox" className="w-4 h-4 accent-yellow-600" checked readOnly />
                               <span className="text-sm font-semibold text-gray-900">Want a better price?</span>
-                              <span className="ml-auto bg-yellow-600 text-white text-xs px-2 py-0.5 font-bold">SAVE</span>
+                              <span className="ml-auto bg-yellow-600 text-white text-xs px-2 py-0.5 font-bold rounded">SAVE</span>
                             </div>
                           </div>
                         )}
@@ -399,13 +560,29 @@ export default function CustomerJourneyDemo() {
                     {/* Trigger log */}
                     <div className="space-y-2">
                       <div className="text-xs text-white/30 uppercase tracking-wider">Event Log</div>
-                      <div className={`text-xs font-mono p-2 bg-black/30 ${triggerDemo !== 'hidden' ? 'text-white/70' : 'text-white/30'}`}>
-                        {triggerDemo === 'hidden' && '> Waiting for user behavior...'}
-                        {triggerDemo === 'detecting' && '> Mouse moving toward exit zone...'}
-                        {triggerDemo === 'triggered' && (
+                      <div className="text-xs font-mono p-2 bg-black/30 text-white/70 min-h-[60px]">
+                        {demoPhase === 'idle' && <div className="text-white/30">{'>'} Waiting for user behavior...</div>}
+
+                        {selectedTrigger === 'exit_intent' && demoPhase === 'detecting' && (
+                          <div className="text-blue-400">{'>'} Mouse moving toward browser exit...</div>
+                        )}
+                        {selectedTrigger === 'time_delay' && demoPhase === 'detecting' && (
+                          <div className="text-blue-400">{'>'} Timer counting: {timeLeft}s remaining...</div>
+                        )}
+                        {selectedTrigger === 'cart_abandonment' && demoPhase === 'detecting' && (
                           <>
-                            <div className="text-green-400">{'>'} exit_intent triggered</div>
-                            <div>{'>'} Widget displayed</div>
+                            <div className="text-red-400">{'>'} User navigated away</div>
+                            <div className="text-blue-400">{'>'} Abandonment cookie set</div>
+                          </>
+                        )}
+                        {selectedTrigger === 'scroll_depth' && demoPhase === 'detecting' && (
+                          <div className="text-blue-400">{'>'} Scroll depth: {scrollPosition}%</div>
+                        )}
+
+                        {demoPhase === 'triggered' && (
+                          <>
+                            <div className="text-green-400">{'>'} {selectedTrigger} triggered!</div>
+                            <div>{'>'} Widget displayed to user</div>
                           </>
                         )}
                       </div>
