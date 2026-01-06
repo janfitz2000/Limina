@@ -389,8 +389,8 @@ export default function CustomerJourneyDemo() {
                         {triggerDemo === 'detecting' && '> Mouse moving toward exit zone...'}
                         {triggerDemo === 'triggered' && (
                           <>
-                            <div className="text-green-400">> exit_intent triggered</div>
-                            <div>> Widget displayed</div>
+                            <div className="text-green-400">{'>'} exit_intent triggered</div>
+                            <div>{'>'} Widget displayed</div>
                           </>
                         )}
                       </div>
