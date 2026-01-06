@@ -25,6 +25,12 @@ export default function CustomerJourneyDemo() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [showExitIntent, setShowExitIntent] = useState(false)
   const [triggerDemo, setTriggerDemo] = useState<'hidden' | 'detecting' | 'triggered'>('hidden')
+  const [triggers, setTriggers] = useState({
+    exit_intent: true,
+    time_delay: true,
+    cart_abandonment: true,
+    scroll_depth: false
+  })
 
   const steps = [
     { id: 'widget' as Step, label: 'Widget', icon: ShoppingCart },
@@ -288,24 +294,33 @@ export default function CustomerJourneyDemo() {
 
                   <div className="space-y-4 mb-8">
                     {[
-                      { icon: MousePointer, label: 'Exit Intent', desc: 'Mouse moves to leave page', color: 'red' },
-                      { icon: Clock, label: 'Time Delay', desc: 'After 30 seconds on page', color: 'blue' },
-                      { icon: ShoppingCart, label: 'Cart Abandonment', desc: 'Returns after leaving', color: 'purple' },
-                      { icon: ArrowDown, label: 'Scroll Depth', desc: 'Scrolls back up after viewing', color: 'green' },
-                    ].map((trigger, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-white/5 border border-white/10">
-                        <div className={`w-10 h-10 bg-${trigger.color}-500/20 flex items-center justify-center`}>
-                          <trigger.icon className={`w-5 h-5 text-${trigger.color}-400`} />
+                      { key: 'exit_intent', icon: MousePointer, label: 'Exit Intent', desc: 'Mouse moves to leave page', threshold: '50px from top' },
+                      { key: 'time_delay', icon: Clock, label: 'Time Delay', desc: 'After time on page', threshold: '30 seconds' },
+                      { key: 'cart_abandonment', icon: ShoppingCart, label: 'Cart Abandonment', desc: 'Returns after leaving', threshold: 'Cookie-based' },
+                      { key: 'scroll_depth', icon: ArrowDown, label: 'Scroll Depth', desc: 'Scrolls back up after viewing', threshold: '70% depth' },
+                    ].map((trigger) => {
+                      const isEnabled = triggers[trigger.key as keyof typeof triggers]
+                      return (
+                        <div key={trigger.key} className={`flex items-center gap-3 p-3 border transition-all ${isEnabled ? 'bg-white/5 border-white/10' : 'bg-white/[0.02] border-white/5'}`}>
+                          <div className={`w-10 h-10 flex items-center justify-center transition-colors ${isEnabled ? 'bg-[#C9A227]/20' : 'bg-white/5'}`}>
+                            <trigger.icon className={`w-5 h-5 transition-colors ${isEnabled ? 'text-[#C9A227]' : 'text-white/30'}`} />
+                          </div>
+                          <div className="flex-1">
+                            <div className={`font-semibold text-sm transition-colors ${isEnabled ? 'text-white' : 'text-white/50'}`}>{trigger.label}</div>
+                            <div className="text-xs text-white/40">{trigger.desc}</div>
+                            {isEnabled && (
+                              <div className="text-xs text-[#C9A227] mt-1">{trigger.threshold}</div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setTriggers(prev => ({ ...prev, [trigger.key]: !prev[trigger.key as keyof typeof triggers] }))}
+                            className={`w-11 h-6 rounded-full relative transition-colors ${isEnabled ? 'bg-[#C9A227]' : 'bg-white/20'}`}
+                          >
+                            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${isEnabled ? 'right-0.5' : 'left-0.5'}`} />
+                          </button>
                         </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-sm">{trigger.label}</div>
-                          <div className="text-xs text-white/40">{trigger.desc}</div>
-                        </div>
-                        <div className="w-11 h-6 bg-[#C9A227] rounded-full relative">
-                          <div className="absolute right-0.5 top-0.5 w-5 h-5 bg-white rounded-full" />
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   <button
