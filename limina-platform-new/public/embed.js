@@ -19,6 +19,12 @@
       collapsed_text: 'Want a better price? Set your target',
       expanded_text: 'Get notified when this drops to your price',
       theme: 'subtle'
+    },
+    colors: {
+      primary: '#C9A227',
+      background: '#1a1a1a',
+      text: '#ffffff',
+      border: '#333333'
     }
   };
 
@@ -214,6 +220,9 @@
     if (userConfig.display) {
       Object.assign(config.display, userConfig.display);
     }
+    if (userConfig.colors) {
+      Object.assign(config.colors, userConfig.colors);
+    }
     return config;
   };
 
@@ -403,6 +412,7 @@
   LiminaWidget.prototype.showTeaser = function() {
     var self = this;
     var display = this.config.display;
+    var colors = this.config.colors;
     var product = this.productData || {};
 
     var currentPrice = product.current_price || this.options.currentPrice || 0;
@@ -410,36 +420,52 @@
     var currency = product.currency || this.options.currency || 'USD';
     var currencySymbol = currency === 'GBP' ? '\u00A3' : '$';
 
+    // Generate inline styles based on custom colors
+    var teaserStyle = 'margin: 16px 0; padding: 16px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; animation: limina-fade-in 0.3s ease-out;' +
+      'background: ' + colors.background + ';' +
+      'border: 1px solid ' + colors.border + ';';
+
+    var titleStyle = 'font-size: 14px; font-weight: 600; margin: 0 0 2px 0; color: ' + colors.text + ';';
+    var subtitleStyle = 'font-size: 12px; margin: 0; color: ' + colors.text + '99;';
+    var badgeStyle = 'font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;' +
+      'background: ' + colors.primary + '; color: ' + colors.background + ';';
+    var labelStyle = 'font-size: 12px; font-weight: 500; color: ' + colors.text + '99;';
+    var inputStyle = 'padding: 10px 12px; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; width: 100%; box-sizing: border-box;' +
+      'background: ' + colors.text + '0D; border: 1px solid ' + colors.border + '; color: ' + colors.text + ';';
+    var btnStyle = 'border: none; padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; width: 100%;' +
+      'background: ' + colors.primary + '; color: ' + colors.background + ';';
+    var checkboxStyle = 'width: 20px; height: 20px; accent-color: ' + colors.primary + '; cursor: pointer;';
+
     var teaserHtml = `
-      <div class="limina-teaser" data-limina-teaser>
-        <div class="limina-teaser-header">
-          <input type="checkbox" class="limina-teaser-checkbox" id="limina-checkbox-${this.options.productId}">
-          <div class="limina-teaser-content">
-            <p class="limina-teaser-title">${display.collapsed_text}</p>
-            <p class="limina-teaser-subtitle">${display.expanded_text}</p>
+      <div class="limina-teaser" data-limina-teaser style="${teaserStyle}">
+        <div class="limina-teaser-header" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+          <input type="checkbox" class="limina-teaser-checkbox" id="limina-checkbox-${this.options.productId}" style="${checkboxStyle}">
+          <div class="limina-teaser-content" style="flex: 1;">
+            <p class="limina-teaser-title" style="${titleStyle}">${display.collapsed_text}</p>
+            <p class="limina-teaser-subtitle" style="${subtitleStyle}">${display.expanded_text}</p>
           </div>
-          <span class="limina-teaser-badge">Save</span>
+          <span class="limina-teaser-badge" style="${badgeStyle}">Save</span>
         </div>
-        <div class="limina-teaser-expanded">
-          <div class="limina-teaser-form">
-            <div class="limina-teaser-input-group">
-              <label class="limina-teaser-label">Your target price</label>
-              <div class="limina-teaser-price-input">
-                <span class="limina-teaser-currency">${currencySymbol}</span>
+        <div class="limina-teaser-expanded" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid ${colors.border}; display: none;">
+          <div class="limina-teaser-form" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="limina-teaser-input-group" style="display: flex; flex-direction: column; gap: 4px;">
+              <label class="limina-teaser-label" style="${labelStyle}">Your target price</label>
+              <div class="limina-teaser-price-input" style="display: flex; align-items: center; gap: 8px;">
+                <span class="limina-teaser-currency" style="font-size: 16px; font-weight: 600; color: ${colors.text};">${currencySymbol}</span>
                 <input type="number" class="limina-teaser-input" id="limina-price-${this.options.productId}"
-                       value="${suggestedPrice}" min="1" max="${currentPrice}" step="1">
+                       value="${suggestedPrice}" min="1" max="${currentPrice}" step="1" style="${inputStyle}">
               </div>
-              <p class="limina-teaser-current-price">Current price: ${currencySymbol}${currentPrice.toFixed(2)}</p>
+              <p class="limina-teaser-current-price" style="font-size: 12px; margin-top: 4px; color: ${colors.text}66;">Current price: ${currencySymbol}${currentPrice.toFixed(2)}</p>
             </div>
-            <div class="limina-teaser-input-group">
-              <label class="limina-teaser-label">Email for notification</label>
+            <div class="limina-teaser-input-group" style="display: flex; flex-direction: column; gap: 4px;">
+              <label class="limina-teaser-label" style="${labelStyle}">Email for notification</label>
               <input type="email" class="limina-teaser-input" id="limina-email-${this.options.productId}"
-                     placeholder="your@email.com">
+                     placeholder="your@email.com" style="${inputStyle}">
             </div>
-            <button class="limina-teaser-btn" id="limina-submit-${this.options.productId}">
+            <button class="limina-teaser-btn" id="limina-submit-${this.options.productId}" style="${btnStyle}">
               Create Price Alert
             </button>
-            <p class="limina-teaser-disclaimer">
+            <p class="limina-teaser-disclaimer" style="font-size: 11px; text-align: center; margin-top: 8px; color: ${colors.text}66;">
               We'll notify you when the price drops to your target. No payment required now.
             </p>
           </div>
@@ -601,8 +627,14 @@
     containers.forEach(function(container) {
       var config = {};
 
-      // Parse trigger config from data attributes
-      if (container.getAttribute('data-triggers')) {
+      // Parse full config from data attribute (includes triggers, display, and colors)
+      if (container.getAttribute('data-config')) {
+        try {
+          config = JSON.parse(container.getAttribute('data-config'));
+        } catch (e) {}
+      }
+      // Legacy support: parse trigger config from data-triggers
+      else if (container.getAttribute('data-triggers')) {
         try {
           config.triggers = JSON.parse(container.getAttribute('data-triggers'));
         } catch (e) {}

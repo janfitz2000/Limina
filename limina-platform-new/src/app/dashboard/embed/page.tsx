@@ -149,13 +149,19 @@ export default function EmbedPage() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://limina-platform-new.vercel.app'
   const widgetUrl = `${baseUrl}/widget?merchantId=${user?.merchantId}&productId=${selectedProduct}`
 
+  const widgetConfig = {
+    triggers: settings.triggers,
+    display: settings.display,
+    colors: settings.colors
+  }
+
   const smartEmbedCode = `<!-- Limina Smart Widget -->
 <div
   data-limina-widget
   data-merchant-id="${user?.merchantId}"
   data-product-id="${selectedProduct}"
   data-current-price="${products.find(p => p.id === selectedProduct)?.current_price || 0}"
-  data-triggers='${JSON.stringify(settings.triggers)}'
+  data-config='${JSON.stringify(widgetConfig)}'
 ></div>
 <script src="${baseUrl}/embed.js" async></script>`
 
@@ -174,8 +180,8 @@ export default function EmbedPage() {
 <button
   onclick="window.open('${widgetUrl}', 'limina-widget', 'width=420,height=600,scrollbars=no')"
   style="
-    background: #C9A227;
-    color: #0C0A09;
+    background: ${settings.colors.primary};
+    color: ${settings.colors.background};
     padding: 12px 24px;
     font-weight: bold;
     border: none;
@@ -191,7 +197,7 @@ export default function EmbedPage() {
   }
 
   const shopifyLiquidCode = `{% comment %}
-  Limina Smart Widget - with behavior triggers
+  Limina Smart Widget - with behavior triggers and custom styling
   Add this to your product.liquid or product-template.liquid file
 {% endcomment %}
 
@@ -200,7 +206,7 @@ export default function EmbedPage() {
   data-merchant-id="${user?.merchantId}"
   data-shopify-product-id="{{ product.id }}"
   data-current-price="{{ product.price | money_without_currency }}"
-  data-triggers='${JSON.stringify(settings.triggers)}'
+  data-config='${JSON.stringify(widgetConfig)}'
 ></div>
 <script src="${baseUrl}/embed.js" async></script>`
 
