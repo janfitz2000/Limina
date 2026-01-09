@@ -569,54 +569,93 @@ export default function EmbedPage() {
         <div className="space-y-6">
           <div className="dashboard-card p-6 dashboard-enter dashboard-enter-delay-1">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Widget Preview</p>
-              <a
-                href="/widget-test"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs text-[#C9A227] hover:text-[#D4AF37] transition-colors"
-              >
-                Test Triggers
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Live Preview</p>
+              <span className="text-[10px] px-2 py-1 bg-green-500/20 text-green-400 rounded">Updates in real-time</span>
             </div>
 
-            {/* Teaser Preview */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-yellow-100">
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" className="w-5 h-5 accent-yellow-600" defaultChecked />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{settings.display.collapsed_text}</p>
-                    <p className="text-xs text-gray-500">{settings.display.expanded_text}</p>
-                  </div>
-                  <span className="bg-yellow-600 text-white text-xs px-2 py-1 rounded font-bold">SAVE</span>
+            {/* Fake product page context */}
+            <div className="bg-[#1a1918] rounded-lg overflow-hidden border border-white/10">
+              {/* Browser bar */}
+              <div className="bg-white/5 px-3 py-2 flex items-center gap-2 border-b border-white/10">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                  <div>
-                    <label className="text-xs text-gray-600">Your target price</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-gray-700 font-semibold">$</span>
-                      <input type="text" className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm" placeholder="85" />
+                <div className="flex-1 text-center text-[10px] text-white/30">yourstore.com/products/item</div>
+              </div>
+
+              {/* Product page mockup */}
+              <div className="p-4 space-y-4">
+                {/* Product info */}
+                <div className="flex gap-3">
+                  <div className="w-16 h-16 bg-white/10 rounded" />
+                  <div className="flex-1">
+                    <div className="h-3 bg-white/20 rounded w-3/4 mb-2" />
+                    <div className="h-2 bg-white/10 rounded w-1/2 mb-2" />
+                    <div className="text-white font-bold">$99.99</div>
+                  </div>
+                </div>
+
+                {/* Add to cart button */}
+                <button className="w-full py-2.5 bg-white/10 text-white/70 text-sm font-medium rounded border border-white/20">
+                  Add to Cart
+                </button>
+
+                {/* Limina Widget Preview */}
+                <div className={`rounded-lg overflow-hidden transition-all ${
+                  settings.display.theme === 'bold'
+                    ? 'bg-[#C9A227]/10 border border-[#C9A227]/30'
+                    : 'bg-white/[0.03] border border-white/10'
+                }`}>
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                        settings.display.theme === 'bold'
+                          ? 'border-[#C9A227]/50 bg-[#C9A227]/20'
+                          : 'border-white/20 bg-white/5'
+                      }`}>
+                        <CheckCircle className={`w-3 h-3 ${
+                          settings.display.theme === 'bold' ? 'text-[#C9A227]' : 'text-[#C9A227]'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${
+                          settings.display.theme === 'bold' ? 'text-white' : 'text-white/90'
+                        }`}>{settings.display.collapsed_text || 'Name your price'}</p>
+                        <p className="text-xs text-white/40">{settings.display.expanded_text || 'Get notified when it drops'}</p>
+                      </div>
+                      <span className="text-[10px] text-white/30 uppercase tracking-wider">Limina</span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">Current price: $99.99</p>
+
+                    <div className="pt-3 border-t border-white/10 space-y-3">
+                      <div>
+                        <label className="text-xs text-white/40">Your target</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-white/50">$</span>
+                          <input
+                            type="text"
+                            className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white"
+                            placeholder="85"
+                            readOnly
+                          />
+                        </div>
+                      </div>
+                      <button className={`w-full py-2 font-semibold text-sm rounded transition-colors ${
+                        settings.display.theme === 'bold'
+                          ? 'bg-[#C9A227] text-black hover:bg-[#D4AF37]'
+                          : 'bg-[#C9A227] text-black hover:bg-[#D4AF37]'
+                      }`}>
+                        Set Alert
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-gray-600">Email for notification</label>
-                    <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded text-sm mt-1" placeholder="your@email.com" />
-                  </div>
-                  <button className="w-full bg-yellow-600 text-white py-2 rounded font-semibold text-sm">
-                    Create Price Alert
-                  </button>
-                  <p className="text-xs text-gray-400 text-center">
-                    We&apos;ll notify you when the price drops to your target. No payment required now.
-                  </p>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-white/40 text-center">
-              This is how the widget will appear when a trigger fires
+            <p className="text-xs text-white/40 text-center mt-4">
+              Widget appears inline below the Add to Cart button
             </p>
           </div>
 
