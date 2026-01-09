@@ -150,6 +150,10 @@ export class PaymentService {
   // Execute payment when buy order conditions are met
   static async executeBuyOrderPayment(buyOrderId: string) {
     try {
+      if (!stripe) {
+        throw new Error('Stripe not configured')
+      }
+
       // Get buy order with payment details
       const { data: buyOrder } = await supabase
         .from('buy_orders')
@@ -209,6 +213,10 @@ export class PaymentService {
   // Refund payment for expired/cancelled orders
   static async refundBuyOrderPayment(buyOrderId: string, reason: 'expired' | 'cancelled') {
     try {
+      if (!stripe) {
+        throw new Error('Stripe not configured')
+      }
+
       const { data: buyOrder } = await supabase
         .from('buy_orders')
         .select(`

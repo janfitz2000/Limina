@@ -474,8 +474,241 @@ export async function sendPriceAlertConfirmationEmail(
   }
 }
 
+export interface OrderFulfilledEmailParams {
+  to: string;
+  customerName?: string;
+  productTitle: string;
+  productImage?: string;
+  targetPrice: number;
+  currency: string;
+  orderUrl?: string;
+}
+
+export interface MerchantOrderFulfilledParams {
+  to: string;
+  merchantName: string;
+  productTitle: string;
+  customerEmail: string;
+  targetPrice: number;
+  currency: string;
+  dashboardUrl: string;
+}
+
+/**
+ * Send order fulfilled email to customer
+ */
+export async function sendOrderFulfilledEmail(
+  params: OrderFulfilledEmailParams
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const {
+      to,
+      customerName,
+      productTitle,
+      productImage,
+      targetPrice,
+      currency,
+      orderUrl,
+    } = params;
+
+    const formattedPrice = formatCurrency(targetPrice, currency);
+    const subject = `Order Confirmed - ${productTitle}`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: ${BRAND_COLORS.textPrimary}; margin: 0; padding: 0; background-color: ${BRAND_COLORS.background}; }
+    .container { max-width: 600px; margin: 0 auto; background-color: ${BRAND_COLORS.cardBg}; }
+    .header { background: ${BRAND_COLORS.background}; color: ${BRAND_COLORS.textPrimary}; padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .header .subtitle { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_COLORS.gold}; margin-top: 8px; }
+    .content { padding: 40px 30px; }
+    .content p { color: ${BRAND_COLORS.textSecondary}; }
+    .content strong { color: ${BRAND_COLORS.textPrimary}; }
+    .success-badge { background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 12px 24px; border-radius: 30px; font-weight: 600; font-size: 14px; display: inline-block; margin: 16px 0; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .product { background: ${BRAND_COLORS.background}; border-radius: 12px; padding: 24px; margin: 30px 0; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+    .product-image { max-width: 180px; height: auto; border-radius: 8px; margin-bottom: 16px; }
+    .product-title { font-size: 18px; font-weight: 600; color: ${BRAND_COLORS.textPrimary}; margin-bottom: 16px; }
+    .price { color: ${BRAND_COLORS.gold}; font-size: 28px; font-weight: 700; }
+    .cta-button { display: inline-block; background: ${BRAND_COLORS.gold}; color: ${BRAND_COLORS.background}; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; margin: 20px 0; }
+    .footer { background: ${BRAND_COLORS.background}; padding: 30px; text-align: center; font-size: 13px; color: ${BRAND_COLORS.textMuted}; border-top: 1px solid rgba(255,255,255,0.05); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="subtitle">Limina</div>
+      <h1>Order Fulfilled</h1>
+    </div>
+
+    <div class="content">
+      <p style="text-align: center;">
+        <span class="success-badge">Payment Captured</span>
+      </p>
+
+      <p>Hi ${customerName || 'there'},</p>
+
+      <p><strong>Great news!</strong> The price for <strong>${productTitle}</strong> dropped to your target price, and your order has been automatically fulfilled.</p>
+
+      <div class="product">
+        ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="product-image" />` : ''}
+        <div class="product-title">${productTitle}</div>
+        <div class="price">${formattedPrice}</div>
+      </div>
+
+      <p>Your payment has been processed. The merchant will ship your order soon.</p>
+
+      ${orderUrl ? `
+      <div style="text-align: center;">
+        <a href="${orderUrl}" class="cta-button">View Order</a>
+      </div>
+      ` : ''}
+    </div>
+
+    <div class="footer">
+      <p>Thank you for using Limina!</p>
+      <p>Questions? <a href="mailto:${REPLY_TO_EMAIL}" style="color: ${BRAND_COLORS.gold};">Contact us</a></p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const { data, error } = await getResend().emails.send({
+      from: FROM_EMAIL,
+      to,
+      replyTo: REPLY_TO_EMAIL,
+      subject,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('Failed to send order fulfilled email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error: any) {
+    console.error('Error sending order fulfilled email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send merchant notification when order is fulfilled
+ */
+export async function sendMerchantOrderFulfilledEmail(
+  params: MerchantOrderFulfilledParams
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const {
+      to,
+      merchantName,
+      productTitle,
+      customerEmail,
+      targetPrice,
+      currency,
+      dashboardUrl,
+    } = params;
+
+    const formattedPrice = formatCurrency(targetPrice, currency);
+    const subject = `New Order Fulfilled - ${productTitle}`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: ${BRAND_COLORS.textPrimary}; margin: 0; padding: 0; background-color: ${BRAND_COLORS.background}; }
+    .container { max-width: 600px; margin: 0 auto; background-color: ${BRAND_COLORS.cardBg}; }
+    .header { background: ${BRAND_COLORS.background}; color: ${BRAND_COLORS.textPrimary}; padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    .header .subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_COLORS.gold}; margin-bottom: 8px; }
+    .content { padding: 40px 30px; }
+    .content p { color: ${BRAND_COLORS.textSecondary}; }
+    .content strong { color: ${BRAND_COLORS.textPrimary}; }
+    .stats { background: ${BRAND_COLORS.background}; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid rgba(255,255,255,0.05); }
+    .stat-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .stat-label { color: ${BRAND_COLORS.textMuted}; font-size: 14px; }
+    .stat-value { font-weight: 700; color: ${BRAND_COLORS.gold}; font-size: 16px; }
+    .cta-button { display: inline-block; background: ${BRAND_COLORS.gold}; color: ${BRAND_COLORS.background}; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 700; margin: 20px 0; }
+    .footer { background: ${BRAND_COLORS.background}; padding: 24px; text-align: center; font-size: 12px; color: ${BRAND_COLORS.textMuted}; border-top: 1px solid rgba(255,255,255,0.05); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="subtitle">Limina</div>
+      <h1>Payment Received</h1>
+    </div>
+
+    <div class="content">
+      <p>Hi ${merchantName},</p>
+
+      <p>A conditional buy order has been fulfilled and payment has been captured.</p>
+
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Product</span>
+          <span class="stat-value" style="color: ${BRAND_COLORS.textPrimary};">${productTitle}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Customer</span>
+          <span class="stat-value" style="color: ${BRAND_COLORS.textPrimary};">${customerEmail}</span>
+        </div>
+        <div class="stat-item" style="border-bottom: none;">
+          <span class="stat-label">Amount</span>
+          <span class="stat-value">${formattedPrice}</span>
+        </div>
+      </div>
+
+      <p>Please fulfill this order through your normal shipping process. The funds will be transferred to your account within 2-3 business days.</p>
+
+      <div style="text-align: center;">
+        <a href="${dashboardUrl}" class="cta-button">View Order</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Limina - Conditional Buy Order Platform</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const { data, error } = await getResend().emails.send({
+      from: FROM_EMAIL,
+      to,
+      replyTo: REPLY_TO_EMAIL,
+      subject,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('Failed to send merchant order fulfilled email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error: any) {
+    console.error('Error sending merchant order fulfilled email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export const emailService = {
   sendDiscountCodeEmail,
   sendMerchantNotificationEmail,
   sendPriceAlertConfirmationEmail,
+  sendOrderFulfilledEmail,
+  sendMerchantOrderFulfilledEmail,
 };

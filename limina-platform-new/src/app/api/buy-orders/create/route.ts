@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { emailService } from '@/lib/email'
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20'
@@ -156,7 +157,7 @@ export async function POST(req: NextRequest) {
         user_id: customerId,
         user_type: 'customer',
         buy_order_id: buyOrder.id,
-        title: 'Buy Order Created! 🎯',
+        title: 'Buy Order Created!',
         message: `Your buy order for ${product.title} at £${targetPrice} is now monitoring for price changes.`,
         type: 'new_order'
       }),
@@ -165,11 +166,26 @@ export async function POST(req: NextRequest) {
         user_id: product.merchant_id,
         user_type: 'merchant',
         buy_order_id: buyOrder.id,
-        title: 'New Buy Order Received 📈',
+        title: 'New Buy Order Received',
         message: `New conditional order for ${product.title} at £${targetPrice} (${Math.round((targetPrice / product.current_price) * 100)}% of current price).`,
         type: 'new_order'
       })
     ])
+
+    // Send confirmation email to customer
+    try {
+      await emailService.sendPriceAlertConfirmationEmail({
+        to: user.email!,
+        customerName: customerInfo?.name || user.user_metadata?.name,
+        productTitle: product.title,
+        productImage: product.image_url,
+        targetPrice: targetPrice,
+        currentPrice: product.current_price,
+        currency: 'GBP'
+      })
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError)
+    }
 
     return NextResponse.json({
       success: true,

@@ -25,6 +25,12 @@ interface WidgetSettings {
     expanded_text: string
     theme: 'subtle' | 'bold'
   }
+  colors: {
+    primary: string
+    background: string
+    text: string
+    border: string
+  }
 }
 
 const DEFAULT_SETTINGS: WidgetSettings = {
@@ -40,6 +46,12 @@ const DEFAULT_SETTINGS: WidgetSettings = {
     collapsed_text: 'Want a better price? Set your target',
     expanded_text: 'Get notified when this drops to your price',
     theme: 'subtle'
+  },
+  colors: {
+    primary: '#C9A227',
+    background: '#1a1a1a',
+    text: '#ffffff',
+    border: '#333333'
   }
 }
 
@@ -124,6 +136,13 @@ export default function EmbedPage() {
     setSettings(prev => ({
       ...prev,
       display: { ...prev.display, ...updates }
+    }))
+  }
+
+  const updateColors = (updates: Partial<WidgetSettings['colors']>) => {
+    setSettings(prev => ({
+      ...prev,
+      colors: { ...prev.colors, ...updates }
     }))
   }
 
@@ -443,6 +462,87 @@ export default function EmbedPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Color Customization */}
+              <div className="pt-6 border-t border-white/10">
+                <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Colors</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-white/50 mb-2">Primary / Accent</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={settings.colors.primary}
+                        onChange={(e) => updateColors({ primary: e.target.value })}
+                        className="w-10 h-10 rounded cursor-pointer border border-white/10 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.colors.primary}
+                        onChange={(e) => updateColors({ primary: e.target.value })}
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-white/50 mb-2">Background</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={settings.colors.background}
+                        onChange={(e) => updateColors({ background: e.target.value })}
+                        className="w-10 h-10 rounded cursor-pointer border border-white/10 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.colors.background}
+                        onChange={(e) => updateColors({ background: e.target.value })}
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-white/50 mb-2">Text</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={settings.colors.text}
+                        onChange={(e) => updateColors({ text: e.target.value })}
+                        className="w-10 h-10 rounded cursor-pointer border border-white/10 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.colors.text}
+                        onChange={(e) => updateColors({ text: e.target.value })}
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-white/50 mb-2">Border</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={settings.colors.border}
+                        onChange={(e) => updateColors({ border: e.target.value })}
+                        className="w-10 h-10 rounded cursor-pointer border border-white/10 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.colors.border}
+                        onChange={(e) => updateColors({ border: e.target.value })}
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, colors: DEFAULT_SETTINGS.colors }))}
+                  className="mt-4 text-xs text-white/40 hover:text-white/60 transition-colors"
+                >
+                  Reset to defaults
+                </button>
+              </div>
             </div>
           )}
 
@@ -592,49 +692,86 @@ export default function EmbedPage() {
                 </button>
 
                 {/* Limina Widget Preview */}
-                <div className={`rounded-lg overflow-hidden transition-all ${
-                  settings.display.theme === 'bold'
-                    ? 'bg-[#C9A227]/10 border border-[#C9A227]/30'
-                    : 'bg-white/[0.03] border border-white/10'
-                }`}>
+                <div
+                  className="rounded-lg overflow-hidden transition-all"
+                  style={{
+                    backgroundColor: settings.colors.background,
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: settings.colors.border
+                  }}
+                >
                   <div className="p-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                        settings.display.theme === 'bold'
-                          ? 'border-[#C9A227]/50 bg-[#C9A227]/20'
-                          : 'border-white/20 bg-white/5'
-                      }`}>
-                        <CheckCircle className={`w-3 h-3 ${
-                          settings.display.theme === 'bold' ? 'text-[#C9A227]' : 'text-[#C9A227]'
-                        }`} />
+                      <div
+                        className="w-5 h-5 rounded border flex items-center justify-center"
+                        style={{
+                          borderColor: settings.colors.primary + '80',
+                          backgroundColor: settings.colors.primary + '20'
+                        }}
+                      >
+                        <CheckCircle
+                          className="w-3 h-3"
+                          style={{ color: settings.colors.primary }}
+                        />
                       </div>
                       <div className="flex-1">
-                        <p className={`text-sm font-medium ${
-                          settings.display.theme === 'bold' ? 'text-white' : 'text-white/90'
-                        }`}>{settings.display.collapsed_text || 'Name your price'}</p>
-                        <p className="text-xs text-white/40">{settings.display.expanded_text || 'Get notified when it drops'}</p>
+                        <p
+                          className="text-sm font-medium"
+                          style={{ color: settings.colors.text }}
+                        >
+                          {settings.display.collapsed_text || 'Name your price'}
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: settings.colors.text + '66' }}
+                        >
+                          {settings.display.expanded_text || 'Get notified when it drops'}
+                        </p>
                       </div>
-                      <span className="text-[10px] text-white/30 uppercase tracking-wider">Limina</span>
+                      <span
+                        className="text-[10px] uppercase tracking-wider"
+                        style={{ color: settings.colors.text + '4D' }}
+                      >
+                        Limina
+                      </span>
                     </div>
 
-                    <div className="pt-3 border-t border-white/10 space-y-3">
+                    <div
+                      className="pt-3 space-y-3"
+                      style={{ borderTop: `1px solid ${settings.colors.border}` }}
+                    >
                       <div>
-                        <label className="text-xs text-white/40">Your target</label>
+                        <label
+                          className="text-xs"
+                          style={{ color: settings.colors.text + '66' }}
+                        >
+                          Your target
+                        </label>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-white/50">$</span>
+                          <span style={{ color: settings.colors.text + '80' }}>$</span>
                           <input
                             type="text"
-                            className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white"
+                            className="flex-1 px-3 py-2 rounded text-sm"
+                            style={{
+                              backgroundColor: settings.colors.text + '0D',
+                              borderWidth: '1px',
+                              borderStyle: 'solid',
+                              borderColor: settings.colors.border,
+                              color: settings.colors.text
+                            }}
                             placeholder="85"
                             readOnly
                           />
                         </div>
                       </div>
-                      <button className={`w-full py-2 font-semibold text-sm rounded transition-colors ${
-                        settings.display.theme === 'bold'
-                          ? 'bg-[#C9A227] text-black hover:bg-[#D4AF37]'
-                          : 'bg-[#C9A227] text-black hover:bg-[#D4AF37]'
-                      }`}>
+                      <button
+                        className="w-full py-2 font-semibold text-sm rounded transition-colors"
+                        style={{
+                          backgroundColor: settings.colors.primary,
+                          color: settings.colors.background
+                        }}
+                      >
                         Set Alert
                       </button>
                     </div>
