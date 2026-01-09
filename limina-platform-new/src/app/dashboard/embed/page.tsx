@@ -46,7 +46,6 @@ const DEFAULT_SETTINGS: WidgetSettings = {
 export default function EmbedPage() {
   const { user } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<string>('')
   const [copied, setCopied] = useState<string | null>(null)
   const [embedType, setEmbedType] = useState<'iframe' | 'popup' | 'inline'>('inline')
@@ -74,8 +73,6 @@ export default function EmbedPage() {
       }
     } catch (error) {
       console.error('Error fetching products:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -192,14 +189,6 @@ export default function EmbedPage() {
     await navigator.clipboard.writeText(text)
     setCopied(type)
     setTimeout(() => setCopied(null), 2000)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
   }
 
   return (
