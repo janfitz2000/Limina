@@ -66,12 +66,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#0C0A09] text-[#FAF9F6] antialiased overflow-x-hidden">
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Poppins', system-ui, sans-serif; }
 
         @keyframes float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+          50% { transform: translateY(-10px); }
         }
 
         @keyframes pulse-gold {
@@ -80,12 +80,14 @@ export default function LandingPage() {
         }
 
         @keyframes flow-in {
-          0% { transform: translateY(-20px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
+          0% { transform: translateY(-20px) scale(0.8); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
         }
-
-        .customer-dot {
+        
+        .customer-orb {
           animation: flow-in 0.5s ease-out forwards;
+          transition: all 0.3s ease;
+          box-shadow: 0 0 15px rgba(201, 162, 39, 0.2);
         }
 
         .float-animation {
@@ -124,14 +126,16 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-24 min-h-screen flex items-center">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#C9A227]/5 rounded-full blur-[128px]" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#C9A227]/5 rounded-full blur-[128px]" />
+          <div className="absolute top-0 -left-32 w-[40rem] h-[40rem] bg-[#C9A227]/5 rounded-full blur-[128px] -translate-y-1/2" />
+          <div className="absolute bottom-0 -right-32 w-[40rem] h-[40rem] bg-[#C9A227]/5 rounded-full blur-[128px] translate-y-1/2" />
+          <div className="absolute -top-20 right-1/4 w-72 h-72 border-2 border-[#C9A227]/10 rounded-full" />
+          <div className="absolute bottom-1/4 left-1/4 w-48 h-48 border border-white/5 rounded-full" />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
+          <div className="grid lg:grid-cols-12 gap-x-12 items-center">
             {/* Left content */}
-            <div className="lg:col-span-6">
+            <div className="lg:col-span-7 z-10">
               <div
                 className={`transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
@@ -154,7 +158,7 @@ export default function LandingPage() {
               </h1>
 
               <p
-                className={`text-xl text-white/50 max-w-md mb-10 leading-relaxed transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                className={`text-xl text-white/50 max-w-lg mb-10 leading-relaxed transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
                 Capture real buying intent. Visualize demand at every price point. Convert with precision.
               </p>
@@ -181,11 +185,11 @@ export default function LandingPage() {
 
             {/* Right - Signature Demand Visualization */}
             <div
-              className={`lg:col-span-6 transition-all duration-1000 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+              className={`lg:col-span-6 lg:-ml-24 transition-all duration-1000 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
             >
               <div className="relative">
                 {/* The visualization card */}
-                <div className="bg-[#161413] border border-white/10 p-8 relative overflow-hidden">
+                <div className="bg-[#161413]/80 backdrop-blur-md border border-white/10 p-8 relative overflow-hidden">
                   {/* Gold accent line */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
 
@@ -216,9 +220,9 @@ export default function LandingPage() {
                             {tier.names.map((name, i) => (
                               <div
                                 key={name}
-                                className={`customer-dot w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
+                                className={`customer-orb w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold cursor-pointer ${
                                   activePrice === tier.price
-                                    ? 'bg-[#C9A227] text-[#0C0A09]'
+                                    ? 'bg-[#C9A227] text-[#0C0A09] scale-110 shadow-lg shadow-[#C9A227]/30'
                                     : 'bg-white/10 text-white/60 hover:bg-white/20'
                                 }`}
                                 style={{
@@ -265,7 +269,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Floating accent */}
-                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-[#C9A227]/20 blur-2xl float-animation" />
+                <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-tr from-[#C9A227]/20 to-transparent rounded-full float-animation" />
               </div>
             </div>
           </div>
