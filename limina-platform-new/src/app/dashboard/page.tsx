@@ -12,42 +12,13 @@ import {
   Clock,
   ChevronRight,
   Package,
-  Users,
-  ArrowUpRight
+  Users
 } from 'lucide-react'
 import { DEMO_BUY_ORDERS, DEMO_STATS } from '@/lib/demo-data'
-
-interface Product {
-  id: string
-  title: string
-  current_price: number
-  price: number
-  currency: string
-  image_url?: string
-}
-
-interface BuyOrder {
-  id: string
-  customer_name: string
-  customer_email: string
-  target_price: number
-  current_price: number
-  status: string
-  created_at: string
-  expires_at: string
-  products?: Product
-}
-
-interface Stats {
-  total: number
-  monitoring: number
-  fulfilled: number
-  pending: number
-  cancelled: number
-  totalRevenue: number
-  avgDiscount: number
-  conversionRate: number
-}
+import { StatCard } from '@/components/dashboard/StatCard'
+import { RecentOrderCard } from '@/components/dashboard/RecentOrderCard'
+import { QuickActionCard } from '@/components/dashboard/QuickActionCard'
+import { BuyOrder, Stats } from '@/types/dashboard'
 
 function DashboardOverviewContent() {
   const searchParams = useSearchParams()
@@ -153,14 +124,6 @@ function DashboardOverviewContent() {
   }, [user, authLoading, isDemo, retryCount, refreshUser])
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(0)}`
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    if (diffHours < 1) return 'Just now'
-    if (diffHours < 24) return `${diffHours}h ago`
-    return `${Math.floor(diffHours / 24)}d ago`
-  }
 
   if (!isDemo && (authLoading || loading)) {
     return (
@@ -197,65 +160,37 @@ function DashboardOverviewContent() {
       {/* Stats Grid */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-1">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Total Orders</p>
-              <span className="flex items-center text-xs text-[#C9A227]">
-                <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                12%
-              </span>
-            </div>
-            <p className="text-3xl font-extrabold stat-number">{stats.total}</p>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-                <ShoppingCart className="h-4 w-4 text-white/40" />
-              </div>
-              <p className="text-xs text-white/40">All time orders placed</p>
-            </div>
-          </div>
-
-          <div className="dashboard-card dashboard-card-featured p-5 dashboard-enter dashboard-enter-delay-2">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-semibold text-[#C9A227] uppercase tracking-widest">Waiting</p>
-            </div>
-            <p className="text-3xl font-extrabold text-[#C9A227] stat-number">{stats.monitoring}</p>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="w-8 h-8 bg-[#C9A227]/10 flex items-center justify-center">
-                <Clock className="h-4 w-4 text-[#C9A227]" />
-              </div>
-              <p className="text-xs text-white/40">Ready to convert</p>
-            </div>
-          </div>
-
-          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-3">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Revenue</p>
-              <span className="flex items-center text-xs text-[#C9A227]">
-                <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                8%
-              </span>
-            </div>
-            <p className="text-3xl font-extrabold stat-number">{formatCurrency(stats.totalRevenue)}</p>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-                <DollarSign className="h-4 w-4 text-white/40" />
-              </div>
-              <p className="text-xs text-white/40">From fulfilled orders</p>
-            </div>
-          </div>
-
-          <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Conversion</p>
-            </div>
-            <p className="text-3xl font-extrabold stat-number">{stats.conversionRate}%</p>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-white/40" />
-              </div>
-              <p className="text-xs text-white/40">Success rate</p>
-            </div>
-          </div>
+          <StatCard
+            label="Total Orders"
+            value={stats.total}
+            icon={ShoppingCart}
+            subtext="All time orders placed"
+            change="12%"
+            delay={1}
+          />
+          <StatCard
+            label="Waiting"
+            value={stats.monitoring}
+            icon={Clock}
+            subtext="Ready to convert"
+            isFeatured={true}
+            delay={2}
+          />
+          <StatCard
+            label="Revenue"
+            value={formatCurrency(stats.totalRevenue)}
+            icon={DollarSign}
+            subtext="From fulfilled orders"
+            change="8%"
+            delay={3}
+          />
+          <StatCard
+            label="Conversion"
+            value={`${stats.conversionRate}%`}
+            icon={TrendingUp}
+            subtext="Success rate"
+            delay={4}
+          />
         </div>
       )}
 
@@ -279,42 +214,7 @@ function DashboardOverviewContent() {
 
           <div className="p-5 space-y-2">
             {buyOrders.slice(0, 5).map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  {order.products?.image_url ? (
-                    <img
-                      className="h-10 w-10 rounded-lg object-cover"
-                      src={order.products.image_url}
-                      alt={order.products.title}
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center">
-                      <Package className="w-5 h-5 text-white/30" />
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-medium text-sm">{order.products?.title || 'Product'}</div>
-                    <div className="text-xs text-white/40">
-                      {order.customer_name} wants {formatCurrency(order.target_price)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                    order.status === 'monitoring'
-                      ? 'bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30'
-                      : order.status === 'fulfilled'
-                      ? 'bg-green-500/10 text-green-400 border border-green-500/30'
-                      : 'bg-white/5 text-white/40'
-                  }`}>
-                    {order.status === 'monitoring' ? 'Waiting' : order.status}
-                  </span>
-                  <span className="text-xs text-white/30">{formatDate(order.created_at)}</span>
-                </div>
-              </div>
+              <RecentOrderCard key={order.id} order={order} />
             ))}
             {buyOrders.length === 0 && (
               <div className="text-center py-8 text-white/30">
@@ -330,45 +230,25 @@ function DashboardOverviewContent() {
           <div className="dashboard-card p-5 dashboard-enter dashboard-enter-delay-6">
             <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-4">Quick Actions</p>
             <div className="space-y-2">
-              <Link
+              <QuickActionCard
                 href={isDemo ? '/dashboard/orders?demo=true' : '/dashboard/orders'}
-                className="flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-white/5 rounded-lg transition-colors"
-              >
-                <div className="w-8 h-8 bg-[#C9A227]/10 rounded-lg flex items-center justify-center">
-                  <Users className="w-4 h-4 text-[#C9A227]" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium">View waiting customers</div>
-                  <div className="text-xs text-white/40">{stats?.monitoring || 0} customers</div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-white/30" />
-              </Link>
-              <Link
+                icon={Users}
+                title="View waiting customers"
+                subtext={`${stats?.monitoring || 0} customers`}
+                highlighted={true}
+              />
+              <QuickActionCard
                 href={isDemo ? '/dashboard/products?demo=true' : '/dashboard/products'}
-                className="flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-white/5 rounded-lg transition-colors"
-              >
-                <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center">
-                  <Package className="w-4 h-4 text-white/60" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium">Manage products</div>
-                  <div className="text-xs text-white/40">Sync & pricing</div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-white/30" />
-              </Link>
-              <Link
+                icon={Package}
+                title="Manage products"
+                subtext="Sync & pricing"
+              />
+              <QuickActionCard
                 href={isDemo ? '/dashboard/analytics?demo=true' : '/dashboard/analytics'}
-                className="flex items-center gap-3 p-3 bg-white/[0.02] hover:bg-white/5 rounded-lg transition-colors"
-              >
-                <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-white/60" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium">View analytics</div>
-                  <div className="text-xs text-white/40">Demand trends</div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-white/30" />
-              </Link>
+                icon={TrendingUp}
+                title="View analytics"
+                subtext="Demand trends"
+              />
             </div>
           </div>
 
