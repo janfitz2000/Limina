@@ -1,5 +1,5 @@
 // Brand customization service for merchant email templates
-import { DatabaseService } from './database'
+import { DatabaseService, supabase } from './database'
 
 export interface BrandSettings {
   id: string
@@ -35,7 +35,7 @@ export class BrandCustomizationService {
   // Get brand settings for a shop
   static async getBrandSettings(shopDomain: string): Promise<BrandSettings | null> {
     try {
-      const { data, error } = await DatabaseService.supabase
+      const { data, error } = await supabase
         .from('brand_settings')
         .select('*')
         .eq('shop_domain', shopDomain)
@@ -56,7 +56,7 @@ export class BrandCustomizationService {
   // Update brand settings
   static async updateBrandSettings(shopDomain: string, settings: Partial<BrandSettings>) {
     try {
-      const { data, error } = await DatabaseService.supabase
+      const { data, error } = await supabase
         .from('brand_settings')
         .upsert({
           shop_domain: shopDomain,

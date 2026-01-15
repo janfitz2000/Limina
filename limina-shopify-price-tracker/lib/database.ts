@@ -350,38 +350,44 @@ export class DatabaseService {
       .eq('shop_domain', shopDomain)
       .eq('status', 'active')
 
+    // Get product IDs for the shop to filter alerts
+    const { data: products } = await supabase
+      .from('products')
+      .select('id')
+      .eq('shop_domain', shopDomain)
+
+    const productIds = products ? products.map(p => p.id) : []
+
     // Get active alerts count
-    const { count: alertCount } = await supabase
-      .from('price_alerts')
-      .select('product_id', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .in('product_id', 
-        supabase
-          .from('products')
-          .select('id')
-          .eq('shop_domain', shopDomain)
-      )
+    let alertCount = 0
+    if (productIds.length > 0) {
+      const { count } = await supabase
+        .from('price_alerts')
+        .select('product_id', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .in('product_id', productIds)
+      alertCount = count || 0
+    }
 
     // Get triggered alerts count (last 30 days)
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    const { count: triggeredCount } = await supabase
-      .from('price_alerts')
-      .select('product_id', { count: 'exact', head: true })
-      .eq('status', 'triggered')
-      .gte('triggered_at', thirtyDaysAgo.toISOString())
-      .in('product_id',
-        supabase
-          .from('products')
-          .select('id')
-          .eq('shop_domain', shopDomain)
-      )
+    let triggeredCount = 0
+    if (productIds.length > 0) {
+      const { count } = await supabase
+        .from('price_alerts')
+        .select('product_id', { count: 'exact', head: true })
+        .eq('status', 'triggered')
+        .gte('triggered_at', thirtyDaysAgo.toISOString())
+        .in('product_id', productIds)
+      triggeredCount = count || 0
+    }
 
     return {
       productCount: productCount || 0,
-      activeAlerts: alertCount || 0,
-      alertsTriggered: triggeredCount || 0
+      activeAlerts: alertCount,
+      alertsTriggered: triggeredCount
     }
   }
 }
